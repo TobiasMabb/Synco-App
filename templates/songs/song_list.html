@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}SYNCO - Song Catalog{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header Block Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold text-white tracking-tight">Song Catalog</h1>
+            <p class="text-zinc-400 text-sm mt-1">Manage arrangements, chords, tracks, and keys inside the central database.</p>
+        </div>
+        <a href="{% url 'song_create' %}" class="inline-flex items-center justify-center bg-zinc-100 hover:bg-zinc-200 text-zinc-950 font-semibold px-4 py-2.5 rounded-xl transition text-sm">
+            + Add New Song
+        </a>
+    </div>
+
+    <!-- Live Dynamic Filter Engine Bar -->
+    <form method="GET" action="{% url 'song_list' %}" class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
+        <!-- Text Keyword Field input -->
+        <div class="md:col-span-2 relative">
+            <input type="text" name="q" value="{{ query }}" placeholder="Search title, artist, or lyric keywords..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 pl-4 pr-10 text-sm text-white focus:outline-none focus:border-zinc-700 placeholder:text-zinc-500">
+            {% if query %}
+                <a href="{% url 'song_list' %}" class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white text-xs">&times; Clear</a>
+            {% endif %}
+        </div>
+
+        <!-- Musical Key Filtering Dropdown menu selector -->
+        <div>
+            <select name="key" onchange="this.form.submit();" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-zinc-700">
+                <option value="">-- Filter By Key --</option>
+                {% for k in musical_keys %}
+                    <option value="{{ k }}" {% if key_filter == k %}selected{% endif %}>Key of {{ k }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Execute Submission Trigger buttons -->
+        <div class="flex gap-2">
+            <button type="submit" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-sm py-2.5 rounded-xl transition">
+                Apply Filter
+            </button>
+            {% if query or key_filter %}
+                <a href="{% url 'song_list' %}" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white text-sm font-medium px-3 py-2.5 rounded-xl transition flex items-center justify-center" title="Reset all current query filter metrics">
+                    Reset
+                </a>
+            {% endif %}
+        </div>
+    </form>
+
+    <!-- Catalog Catalog Output Loop Display Grid -->
+    {% if songs %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for song in songs %}
+                <div class="bg-zinc-900 border border-zinc-800 p-5 rounded-xl hover:border-zinc-700 transition flex items-center justify-between group">
+                    <div class="truncate mr-4">
+                        <h3 class="text-base font-bold text-white truncate group-hover:text-zinc-200 transition">{{ song.title }}</h3>
+                        <p class="text-zinc-400 text-xs truncate mt-0.5">by {{ song.artist }}</p>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <span class="font-mono text-xs font-black bg-zinc-950 text-zinc-400 border border-zinc-800 px-2.5 py-1 rounded-lg">
+                            {{ song.key }}
+                        </span>
+                        <a href="{% url 'song_detail' song.pk %}" class="bg-zinc-800 group-hover:bg-zinc-100 text-zinc-300 group-hover:text-zinc-950 text-xs font-bold px-3 py-2 rounded-lg transition">
+                            Open &rarr;
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Zero Records Match State view wrapper -->
+        <div class="border border-dashed border-zinc-800 rounded-2xl p-12 text-center max-w-md mx-auto mt-6">
+            <p class="text-zinc-400 text-sm mb-4">No tracks match your current filter parameters.</p>
+            <a href="{% url 'song_list' %}" class="inline-flex bg-zinc-800 text-white text-xs font-semibold px-4 py-2 rounded-xl hover:bg-zinc-700 transition">Clear Filters & View All</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

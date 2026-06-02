@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold">{{ song.title }}</h1>
+        <p class="text-gray-400">{{ song.artist }}</p>
+    </div>
+
+    <div class="aspect-video w-full">
+        <iframe class="w-full h-full rounded-xl" src="https://www.youtube.com/embed/{{ song.youtube_id }}"></iframe>
+    </div>
+
+    <div class="bg-gray-800 p-4 rounded-xl flex gap-3">
+        <input type="number" id="bpm" value="100" class="w-20 p-2 bg-gray-700 rounded text-center">
+        <button onclick="toggleMetronome()" class="flex-1 bg-green-600 p-2 rounded font-bold">Metronome</button>
+    </div>
+
+    <div class="space-y-4">
+        <div class="bg-gray-800 p-4 rounded-xl">
+            <h3 class="text-blue-400 font-bold mb-2">Chords</h3>
+            <pre class="font-mono text-sm overflow-x-auto">{{ song.chords }}</pre>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-xl">
+            <h3 class="text-blue-400 font-bold mb-2">Lyrics</h3>
+            <p class="whitespace-pre-wrap">{{ song.lyrics }}</p>
+        </div>
+    </div>
+    
+    <form action="{% url 'song_delete' song.pk %}" method="POST">
+        {% csrf_token %}
+        <button class="w-full text-red-500 text-sm">Delete Song</button>
+    </form>
+</div>
+
+<script>
+    let timer;
+    function toggleMetronome() {
+        if(timer) { clearInterval(timer); timer = null; }
+        else timer = setInterval(() => { new Audio('/static/click.mp3').play(); }, (60 / document.getElementById('bpm').value) * 1000);
+    }
+</script>
+{% endblock %}

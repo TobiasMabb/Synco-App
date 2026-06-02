@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}SYNCO - Create Account{% endblock %}
+
+{% block content %}
+<div class="min-h-[75vh] flex flex-col justify-center items-center">
+    <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-xl">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-extrabold text-white tracking-tight">Create Account</h2>
+            <p class="text-sm text-zinc-400 mt-2">Get started with worship systems administration access tools</p>
+        </div>
+
+        <form method="POST" class="space-y-5">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+                <div class="p-4 rounded-xl text-xs bg-red-500/10 border border-red-500/20 text-red-400 space-y-1">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <div>• {{ error }}</div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Username</label>
+                <input type="text" name="username" value="{{ form.username.value|default:'' }}" required autocomplete="username"
+                       class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brandBlue focus:border-transparent transition">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Email Address</label>
+                <input type="email" name="email" value="{{ form.email.value|default:'' }}" required autocomplete="email"
+                       class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brandBlue focus:border-transparent transition">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Password</label>
+                <input type="password" name="password" required autocomplete="new-password"
+                       class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brandBlue focus:border-transparent transition">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Confirm Password</label>
+                <input type="password" name="confirm_password" required autocomplete="new-password"
+                       class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brandBlue focus:border-transparent transition">
+            </div>
+
+            <button type="submit" 
+                    class="w-full bg-brandGreen hover:bg-emerald-600 text-white font-semibold py-3 rounded-xl transition duration-200 mt-2 shadow-lg shadow-brandGreen/10">
+                Register Team
+            </button>
+        </form>
+
+        <div class="text-center mt-6 border-t border-zinc-800/60 pt-4">
+            <p class="text-sm text-zinc-400">
+                Already registered? 
+                <a href="{% url 'login' %}" class="text-brandBlue font-medium hover:underline ml-1">Sign in here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

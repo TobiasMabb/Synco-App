@@ -1,0 +1,22 @@
+{
+  "name": "SYNCO - Worship Management",
+  "short_name": "Synco",
+  "description": "Manage song catalogs and coordinate setlists seamlessly.",
+  "start_url": "/songs/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#18181b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/images/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/static/images/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

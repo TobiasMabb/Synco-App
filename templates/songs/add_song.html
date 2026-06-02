@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-gray-800 p-6 rounded-2xl shadow-xl">
+    <h2 class="text-xl font-bold text-white mb-6 text-center">Add New Song</h2>
+    
+    <form method="POST" class="space-y-4">
+        {% csrf_token %}
+        
+        <div>
+            <input type="text" name="title" id="title" placeholder="Song Title" required
+                class="w-full p-4 bg-gray-700 text-white rounded-xl border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        
+        <div>
+            <input type="text" name="artist" id="artist" placeholder="Artist Name" required
+                class="w-full p-4 bg-gray-700 text-white rounded-xl border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        
+        <button type="button" id="fetch-btn" onclick="fetchLyrics()" 
+            class="w-full bg-gray-600 hover:bg-gray-500 text-white py-3 rounded-xl font-bold transition duration-200">
+            Auto-Fetch Lyrics
+        </button>
+        
+        <div>
+            <label class="block text-xs text-gray-400 mb-1 ml-1">Chords (Manual Paste)</label>
+            <textarea name="chords" rows="5" placeholder="Place chords here..."
+                class="w-full p-4 bg-gray-700 text-white rounded-xl border border-gray-600 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+        </div>
+            
+        <div>
+            <label class="block text-xs text-gray-400 mb-1 ml-1">Lyrics (Auto or Manual)</label>
+            <textarea name="lyrics" id="lyrics" rows="8" placeholder="Lyrics will appear here..."
+                class="w-full p-4 bg-gray-700 text-white rounded-xl border border-gray-600 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+        </div>
+        
+        <button type="submit" 
+            class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-blue-900/50 transition duration-200">
+            Save Song
+        </button>
+    </form>
+</div>
+
+<script>
+    async function fetchLyrics() {
+        const btn = document.getElementById('fetch-btn');
+        const lyricsBox = document.getElementById('lyrics');
+        
+        let t = document.getElementById('title').value.strip ? document.getElementById('title').value.strip() : document.getElementById('title').value;
+        let a = document.getElementById('artist').value.strip ? document.getElementById('artist').value.strip() : document.getElementById('artist').value;
+        
+        if (!t || !a) {
+            alert("Please fill up Song Title and Artist Name first.");
+            return;
+        }
+
+        // Simulan ang Loading State
+        btn.innerText = "🔍 Fetching from Genius...";
+        btn.disabled = true;
+        btn.classList.add('opacity-50');
+        lyricsBox.value = "Searching for lyrics, please wait...";
+
+        try {
+            let res = await fetch(`/songs/get-lyrics/?title=${encodeURIComponent(t)}&artist=${encodeURIComponent(a)}`);
+            let data = await res.json();
+            lyricsBox.value = data.lyrics;
+        } catch (e) {
+            lyricsBox.value = "⚠️ Connection error. Please paste the lyrics manually.";
+        } finally {
+            // Ibalik sa Dati ang Button State
+            btn.innerText = "Auto-Fetch Lyrics";
+            btn.disabled = false;
+            btn.classList.remove('opacity-50');
+        }
+    }
+</script>
+{% endblock %}

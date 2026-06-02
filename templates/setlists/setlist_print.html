@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Setlist - {{ setlist.title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #09090b; color: #f4f4f5; }
+        /* Print Engine Overrides */
+        @media print {
+            body { background-color: #ffffff !important; color: #000000 !important; }
+            .no-print { display: none !important; }
+            .print-card { border: none !important; background: transparent !important; padding: 0 !important; }
+            .text-print-dark { color: #000000 !important; }
+            .text-print-muted { color: #4b5563 !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen antialiased p-4 md:p-10">
+
+    <div class="max-w-4xl mx-auto space-y-8">
+        
+        <div class="no-print bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md">
+            <div class="flex items-center gap-3">
+                <button onclick="window.close()" class="text-sm text-zinc-400 hover:text-white transition inline-flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Close Tab
+                </button>
+            </div>
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <button onclick="copyToClipboard()" id="copyBtn" class="flex-1 sm:flex-initial px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-semibold rounded-lg transition inline-flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    </svg>
+                    Copy GC Text
+                </button>
+                <button onclick="window.print()" class="flex-1 sm:flex-initial px-5 py-2 bg-brandBlue bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition inline-flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    Print Sheet (Ctrl+P)
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            
+            <div class="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 md:p-8 print-card space-y-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-white text-print-dark tracking-tight">{{ setlist.title }}</h1>
+                    <p class="text-sm text-zinc-400 text-print-muted mt-1 font-medium">
+                        {{ setlist.event_date|date:"l, F d, Y" }}
+                    </p>
+                </div>
+
+                <hr class="border-zinc-800/80">
+
+                <div class="space-y-4">
+                    {% for item in current_set_songs %}
+                        <div class="flex items-start justify-between gap-4 py-2 border-b border-zinc-800/40 pb-3">
+                            <div class="flex items-start gap-3">
+                                <span class="text-sm font-bold text-zinc-500 min-w-[20px]">{{ item.order }}.</span>
+                                <div>
+                                    <h3 class="text-sm font-bold text-white text-print-dark">{{ item.song.title }}</h3>
+                                    <p class="text-xs text-zinc-400 text-print-muted mt-0.5">{{ item.song.artist }}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-semibold bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded border border-zinc-700/50 print:border-none print:bg-transparent print:text-black">
+                                Key: {{ item.song.key }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                {% if setlist.notes %}
+                    <div class="mt-8 pt-4 border-t border-zinc-800">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Additional Instructions / Notes:</h4>
+                        <p class="text-sm text-zinc-300 text-print-dark whitespace-pre-line bg-zinc-950/40 p-4 rounded-lg border border-zinc-800/60 print:p-0 print:border-none print:bg-transparent">
+                            {{ setlist.notes }}
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="no-print space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-400">Messenger / GC Text Preview</h3>
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-sm relative">
+                    <textarea id="plainTextContainer" class="hidden">{{ plain_text }}</textarea>
+                    <pre class="text-xs text-zinc-300 font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed bg-zinc-950 p-4 rounded-xl border border-zinc-800/50 select-all">{{ plain_text }}</pre>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        function copyToClipboard() {
+            const copyText = document.getElementById("plainTextContainer");
+            const btn = document.getElementById("copyBtn");
+            
+            // Execute fallback manual creation for robust browser support
+            navigator.clipboard.writeText(copyText.value).then(() => {
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-green-400">Copied!</span>
+                `;
+                btn.classList.add("border-green-500/30", "bg-green-500/5");
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove("border-green-500/30", "bg-green-500/5");
+                }, 2000);
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        }
+    </script>
+</body>
+</html>
