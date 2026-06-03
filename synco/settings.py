@@ -7,11 +7,7 @@ SECRET_KEY = 'django-insecure-synco-super-secret-key-change-in-production'
 
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'syncooo.pythonanywhere.com',
-    '127.0.0.1',
-    'localhost',
-]
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -30,6 +26,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Idinagdag para sa maayos na pag-serve ng static files sa Render production
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -58,10 +56,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'synco.wsgi.application'
 
+# 🛠️ FIXED: Kapag nasa Render, itatabi natin ang database sa permanenteng /data/ disk folder para hindi mabura
+if os.environ.get('RENDER'):
+    DB_PATH = os.path.join('/data', 'db.sqlite3')
+else:
+    DB_PATH = BASE_DIR / 'db.sqlite3'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': DB_PATH,
     }
 }
 
@@ -79,6 +83,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Idinagdag para mas mapabilis ang loading ng static structures sa production hosting
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Authentication Configurations
