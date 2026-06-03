@@ -7,18 +7,18 @@ from django.http import JsonResponse
 from .models import Song
 
 # --- PRODUCTION PROXY DETECTION ---
-# PythonAnywhere free accounts require outbound traffic to use their proxy tunnel.
 IS_PYTHONANYWHERE = 'PYTHONANYWHERE_SITE' in os.environ
 PROXY_URL = 'http://proxy.server:3128'
 
 # I-PASTE MO DITO ANG MAHABANG CLIENT ACCESS TOKEN MULA SA GENIUS
 GENIUS_TOKEN = "Lwh7dOi2bTY2TCdAQpe-g5tCOwu3YoTtaPK-e9LWPVCjc8OZf40ro4pIIPb0_Sth"
 
-# Configure lyricsgenius to handle the proxy configuration if deployed live
+# Initialize standard Genius client instance
+genius = lyricsgenius.Genius(GENIUS_TOKEN)
+
+# Properly configure the proxy to its session parameters if on production
 if IS_PYTHONANYWHERE:
-    genius = lyricsgenius.Genius(GENIUS_TOKEN, proxies={'http': PROXY_URL, 'https': PROXY_URL})
-else:
-    genius = lyricsgenius.Genius(GENIUS_TOKEN)
+    genius.proxies = {'http': PROXY_URL, 'https': PROXY_URL}
 
 # Itatago nito ang mga technical logs sa terminal para malinis tignan
 genius.verbose = False 
