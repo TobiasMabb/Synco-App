@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Song | SYNCO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -10,48 +11,68 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
         ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+        
+        /* Pinipigilan ang iOS/Android auto-zoom kapag nag-tatap sa inputs */
+        @media screen and (max-width: 767px) {
+            input, textarea { font-size: 16px !important; }
+        }
     </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 p-4 md:p-8">
-    <div class="max-w-2xl mx-auto bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-2xl">
-        <h2 class="text-2xl font-black text-white mb-6 tracking-tight">Add New Song</h2>
+<body class="bg-zinc-950 text-zinc-100 p-3 sm:p-6 md:p-10 min-h-screen flex items-center justify-center">
+
+    <div class="w-full max-w-2xl bg-zinc-900 border border-zinc-800 p-5 sm:p-6 md:p-8 rounded-2xl shadow-2xl">
+        <h2 class="text-xl sm:text-2xl font-black text-white mb-6 tracking-tight">Add New Song</h2>
         
-        <form method="POST">
+        <form method="POST" class="space-y-4">
             {% csrf_token %}
             
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Title</label>
-                    <input type="text" id="title" name="title" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition">
+                    <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">Title</label>
+                    <input type="text" id="title" name="title" required 
+                           class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3.5 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Artist</label>
-                    <input type="text" id="artist" name="artist" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition">
+                    <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">Artist</label>
+                    <input type="text" id="artist" name="artist" required 
+                           class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3.5 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition">
                 </div>
             </div>
 
-            <button type="button" id="btn-fetch" onclick="autoFetch()" class="w-full bg-emerald-950 border border-emerald-800 text-emerald-400 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:border-emerald-500 hover:text-white transition mb-6 shadow-lg shadow-emerald-950/20">
+            <button type="button" id="btn-fetch" onclick="autoFetch()" 
+                    class="w-full bg-emerald-950 border border-emerald-800 text-emerald-400 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:border-emerald-500 hover:text-white active:scale-[0.99] transition shadow-lg shadow-emerald-950/20">
                 ⚡ Auto-Fetch Lyrics & Video
             </button>
 
-            <div class="mb-4">
-                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">YouTube Video ID</label>
-                <input type="text" id="youtube_id" name="youtube_id" readonly class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-500 cursor-not-allowed outline-none" placeholder="Kusang papasok ang ID dito...">
+            <div>
+                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">YouTube Video ID</label>
+                <input type="text" id="youtube_id" name="youtube_id" readonly 
+                       class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3.5 text-sm text-zinc-500 cursor-not-allowed outline-none" 
+                       placeholder="Kusang papasok ang ID dito...">
             </div>
 
-            <div class="mb-4">
-                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Lyrics</label>
-                <textarea id="lyrics" name="lyrics" rows="6" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-emerald-500 outline-none transition"></textarea>
+            <div>
+                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">Lyrics</label>
+                <textarea id="lyrics" name="lyrics" rows="5" 
+                          class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3.5 text-sm focus:border-emerald-500 outline-none transition"></textarea>
             </div>
 
-            <div class="mb-8">
-                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Chords (Manual Paste)</label>
-                <textarea id="chords" name="chords" rows="6" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm font-mono focus:border-emerald-500 outline-none transition" placeholder="Paste chords here..."></textarea>
+            <div>
+                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">Chords (Manual Paste)</label>
+                <textarea id="chords" name="chords" rows="5" 
+                          class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3.5 text-sm font-mono focus:border-emerald-500 outline-none transition" 
+                          placeholder="Paste chords here..."></textarea>
             </div>
 
-            <div class="flex gap-4">
-                <button type="submit" class="w-1/2 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm transition">Save Song</button>
-                <a href="{% url 'song_list' %}" class="w-1/2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 py-3 rounded-xl font-bold text-sm text-center transition">Cancel</a>
+            <div class="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+                <a href="{% url 'song_list' %}" 
+                   class="w-full sm:w-1/2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 py-3.5 rounded-xl font-bold text-sm text-center transition">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="w-full sm:w-1/2 bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-lg shadow-emerald-900/10">
+                    Save Song
+                </button>
             </div>
         </form>
     </div>
