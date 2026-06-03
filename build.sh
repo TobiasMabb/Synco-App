@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
+# exit on error
 set -o errexit
 
-pip install -r requirements.txt
+# Idinagdag ang --no-cache-dir para i-clear ang conflict sa server
+pip install --no-cache-dir -r requirements.txt
 
 python manage.py collectstatic --noinput
 python manage.py migrate
