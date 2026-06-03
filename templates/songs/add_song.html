@@ -6,13 +6,13 @@
     <title>Add New Song | SYNCO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Tugma sa scrollbar style ng main page */
+        /* Matches main page scrollbar styling */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
         ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
         
-        /* Pinipigilan ang iOS/Android auto-zoom kapag nag-tatap sa inputs */
+        /* Prevents automatic mobile browser zoom on field focus */
         @media screen and (max-width: 767px) {
             input, textarea { font-size: 16px !important; }
         }
@@ -48,7 +48,7 @@
                 <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">YouTube Video ID</label>
                 <input type="text" id="youtube_id" name="youtube_id" readonly 
                        class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3.5 text-sm text-zinc-500 cursor-not-allowed outline-none" 
-                       placeholder="Kusang papasok ang ID dito...">
+                       placeholder="Video ID will be populated automatically...">
             </div>
 
             <div>
@@ -83,7 +83,10 @@
             let artist = document.getElementById('artist').value.trim();
             let btn = document.getElementById('btn-fetch');
 
-            if (!title || !artist) { alert('Please enter both Title and Artist first!'); return; }
+            if (!title || !artist) { 
+                alert('Please enter both Title and Artist first!'); 
+                return; 
+            }
 
             btn.innerText = "🔄 Fetching...";
             btn.disabled = true;
