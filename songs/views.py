@@ -13,7 +13,8 @@ genius = lyricsgenius.Genius(GENIUS_TOKEN)
 # Itatago nito ang mga technical logs sa terminal para malinis tignan
 genius.verbose = False 
 
-YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
+# 🛠️ I-PASTE MO DITO ANG NAKUHA MONG YOUTUBE API KEY KANINA MULA KAY GOOGLE
+YOUTUBE_API_KEY = "AIzaSyA4BiwzKN56jYWIH9BI5DzmCqBNDK9snGk"
 
 def song_list_view(request):
     songs = Song.objects.all().order_by('-created_at')
@@ -25,16 +26,9 @@ def song_create_view(request):
         artist = request.POST.get('artist')
         lyrics = request.POST.get('lyrics', '')
         chords = request.POST.get('chords', '')
+        youtube_id = request.POST.get('youtube_id', '')  # Bagong hila mula sa form
         
-        # YouTube API Fetch
-        url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={title}+{artist}&type=video&key={YOUTUBE_API_KEY}&maxResults=1"
-        yt_id = None
-        try:
-            yt_id = requests.get(url).json()['items'][0]['id']['videoId']
-        except: 
-            pass
-        
-        Song.objects.create(title=title, artist=artist, lyrics=lyrics, chords=chords, youtube_id=yt_id)
+        Song.objects.create(title=title, artist=artist, lyrics=lyrics, chords=chords, youtube_id=youtube_id)
         return redirect('song_list')
     return render(request, 'songs/add_song.html')
 
@@ -43,30 +37,63 @@ def get_lyrics_api(request):
     artist = request.GET.get('artist', '').strip()
     
     if not title or not artist:
-        return JsonResponse({'lyrics': 'Please enter both Title and Artist.'})
+        return JsonResponse({'lyrics': 'Please enter both Title and Artist.', 'youtube_id': ''})
 
+    response_data = {
+        'lyrics': "⚠️ Lyrics not found in Genius database.\n\nPlease copy and paste the lyrics manually.",
+        'youtube_id': ''
+    }
+
+    # --- HAKBANG A: KUKUNIN ANG LYRICS (GENIUS) ---
     try:
-        # Hahanapin ang kanta gamit ang Genius Library
         song = genius.search_song(title, artist)
-        
         if song and song.lyrics:
-            # Paglilinis sa lyrics output ng Genius
             clean_lyrics = song.lyrics.replace(f"{song.title} Lyrics", "", 1).strip()
-            
-            # Tinatanggal ang "Embed" at mga random numbers sa dulo ng text
             if clean_lyrics.endswith("Embed"):
                 clean_lyrics = clean_lyrics[:-5].strip()
             clean_lyrics = re.sub(r'\d+$', '', clean_lyrics).strip()
-            
-            return JsonResponse({'lyrics': clean_lyrics})
-            
+            response_data['lyrics'] = clean_lyrics
     except Exception as e:
         print(f"Genius Error: {e}")
-        pass
+
+    # --- HAKBANG B: KUKUNIN ANG YOUTUBE VIDEO ID ---
+    try:
+        if YOUTUBE_API_KEY and YOUTUBE_API_KEY != "I-PASTE_DITO_YUNG_AIzaSy_KEY_MO":
+            url = "https://www.googleapis.com/youtube/v3/search"
+            search_query = f"{artist} {title} lyrics"
+            
+            params = {
+                'part': 'snippet',
+                'q': search_query,
+                'type': 'video',
+                'videoEmbeddable': 'true',   # Dapat pwedeng i-embed sa code
+                'videoSyndicated': 'true',   # 🔥 ETO ANG TUNAY NA SOLUSYON! Dapat pwedeng i-play sa labas ng youtube.com
+                'key': YOUTUBE_API_KEY,
+                'maxResults': 5
+            }
+            
+            yt_res = requests.get(url, params=params).json()
+            
+            if 'items' in yt_res and len(yt_res['items']) > 0:
+                selected_video_id = None
+                
+                for item in yt_res['items']:
+                    channel_title = item['snippet'].get('channelTitle', '')
+                    
+                    # Siguraduhin pa rin nating i-bypass ang mga Topic channels kung may makalusot
+                    if "Topic" not in channel_title:
+                        selected_video_id = item['id']['videoId']
+                        break
+                
+                if not selected_video_id:
+                    selected_video_id = yt_res['items'][0]['id']['videoId']
+                    
+                response_data['youtube_id'] = selected_video_id
+                
+    except Exception as e:
+        print(f"YouTube Fetch Error: {e}")
         
-    return JsonResponse({
-        'lyrics': "⚠️ Lyrics not found in Genius database.\n\nPlease copy and paste the lyrics manually."
-    })
+    return JsonResponse(response_data)  
 
 def song_detail_view(request, pk):
     return render(request, 'songs/song_detail.html', {'song': get_object_or_404(Song, pk=pk)})

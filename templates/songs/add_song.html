@@ -1,77 +1,89 @@
-{% extends 'base.html' %}
-
-{% block content %}
-<div class="max-w-md mx-auto bg-gray-800 p-6 rounded-2xl shadow-xl">
-    <h2 class="text-xl font-bold text-white mb-6 text-center">Add New Song</h2>
-    
-    <form method="POST" class="space-y-4">
-        {% csrf_token %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add New Song | SYNCO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Tugma sa scrollbar style ng main page */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 p-4 md:p-8">
+    <div class="max-w-2xl mx-auto bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-2xl">
+        <h2 class="text-2xl font-black text-white mb-6 tracking-tight">Add New Song</h2>
         
-        <div>
-            <input type="text" name="title" id="title" placeholder="Song Title" required
-                class="w-full p-4 bg-gray-700 text-white rounded-xl border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none">
-        </div>
-        
-        <div>
-            <input type="text" name="artist" id="artist" placeholder="Artist Name" required
-                class="w-full p-4 bg-gray-700 text-white rounded-xl border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none">
-        </div>
-        
-        <button type="button" id="fetch-btn" onclick="fetchLyrics()" 
-            class="w-full bg-gray-600 hover:bg-gray-500 text-white py-3 rounded-xl font-bold transition duration-200">
-            Auto-Fetch Lyrics
-        </button>
-        
-        <div>
-            <label class="block text-xs text-gray-400 mb-1 ml-1">Chords (Manual Paste)</label>
-            <textarea name="chords" rows="5" placeholder="Place chords here..."
-                class="w-full p-4 bg-gray-700 text-white rounded-xl border border-gray-600 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
-        </div>
+        <form method="POST">
+            {% csrf_token %}
             
-        <div>
-            <label class="block text-xs text-gray-400 mb-1 ml-1">Lyrics (Auto or Manual)</label>
-            <textarea name="lyrics" id="lyrics" rows="8" placeholder="Lyrics will appear here..."
-                class="w-full p-4 bg-gray-700 text-white rounded-xl border border-gray-600 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
-        </div>
-        
-        <button type="submit" 
-            class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-blue-900/50 transition duration-200">
-            Save Song
-        </button>
-    </form>
-</div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Title</label>
+                    <input type="text" id="title" name="title" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Artist</label>
+                    <input type="text" id="artist" name="artist" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition">
+                </div>
+            </div>
 
-<script>
-    async function fetchLyrics() {
-        const btn = document.getElementById('fetch-btn');
-        const lyricsBox = document.getElementById('lyrics');
-        
-        let t = document.getElementById('title').value.strip ? document.getElementById('title').value.strip() : document.getElementById('title').value;
-        let a = document.getElementById('artist').value.strip ? document.getElementById('artist').value.strip() : document.getElementById('artist').value;
-        
-        if (!t || !a) {
-            alert("Please fill up Song Title and Artist Name first.");
-            return;
+            <button type="button" id="btn-fetch" onclick="autoFetch()" class="w-full bg-emerald-950 border border-emerald-800 text-emerald-400 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:border-emerald-500 hover:text-white transition mb-6 shadow-lg shadow-emerald-950/20">
+                ⚡ Auto-Fetch Lyrics & Video
+            </button>
+
+            <div class="mb-4">
+                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">YouTube Video ID</label>
+                <input type="text" id="youtube_id" name="youtube_id" readonly class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-500 cursor-not-allowed outline-none" placeholder="Kusang papasok ang ID dito...">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Lyrics</label>
+                <textarea id="lyrics" name="lyrics" rows="6" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-emerald-500 outline-none transition"></textarea>
+            </div>
+
+            <div class="mb-8">
+                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Chords (Manual Paste)</label>
+                <textarea id="chords" name="chords" rows="6" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm font-mono focus:border-emerald-500 outline-none transition" placeholder="Paste chords here..."></textarea>
+            </div>
+
+            <div class="flex gap-4">
+                <button type="submit" class="w-1/2 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm transition">Save Song</button>
+                <a href="{% url 'song_list' %}" class="w-1/2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 py-3 rounded-xl font-bold text-sm text-center transition">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function autoFetch() {
+            let title = document.getElementById('title').value.trim();
+            let artist = document.getElementById('artist').value.trim();
+            let btn = document.getElementById('btn-fetch');
+
+            if (!title || !artist) { alert('Please enter both Title and Artist first!'); return; }
+
+            btn.innerText = "🔄 Fetching...";
+            btn.disabled = true;
+
+            fetch(`/songs/get-lyrics/?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.lyrics) document.getElementById('lyrics').value = data.lyrics;
+                    if (data.youtube_id) {
+                        document.getElementById('youtube_id').value = data.youtube_id;
+                        btn.innerText = "✨ Fetch Successful!";
+                    } else {
+                        btn.innerText = "⚠️ Video not found.";
+                    }
+                    btn.disabled = false;
+                })
+                .catch(err => {
+                    btn.innerText = "❌ Fetch Failed";
+                    btn.disabled = false;
+                });
         }
-
-        // Simulan ang Loading State
-        btn.innerText = "🔍 Fetching from Genius...";
-        btn.disabled = true;
-        btn.classList.add('opacity-50');
-        lyricsBox.value = "Searching for lyrics, please wait...";
-
-        try {
-            let res = await fetch(`/songs/get-lyrics/?title=${encodeURIComponent(t)}&artist=${encodeURIComponent(a)}`);
-            let data = await res.json();
-            lyricsBox.value = data.lyrics;
-        } catch (e) {
-            lyricsBox.value = "⚠️ Connection error. Please paste the lyrics manually.";
-        } finally {
-            // Ibalik sa Dati ang Button State
-            btn.innerText = "Auto-Fetch Lyrics";
-            btn.disabled = false;
-            btn.classList.remove('opacity-50');
-        }
-    }
-</script>
-{% endblock %}
+    </script>
+</body>
+</html>

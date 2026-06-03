@@ -1,42 +1,534 @@
 {% extends 'base.html' %}
+
+{% block title %}SYNCO - {{ song.title }}{% endblock %}
+
 {% block content %}
-<div class="space-y-6">
-    <div>
-        <h1 class="text-2xl font-bold">{{ song.title }}</h1>
-        <p class="text-gray-400">{{ song.artist }}</p>
-    </div>
+<div class="relative min-h-screen text-zinc-100 space-y-6 pb-24">
 
-    <div class="aspect-video w-full">
-        <iframe class="w-full h-full rounded-xl" src="https://www.youtube.com/embed/{{ song.youtube_id }}"></iframe>
-    </div>
-
-    <div class="bg-gray-800 p-4 rounded-xl flex gap-3">
-        <input type="number" id="bpm" value="100" class="w-20 p-2 bg-gray-700 rounded text-center">
-        <button onclick="toggleMetronome()" class="flex-1 bg-green-600 p-2 rounded font-bold">Metronome</button>
-    </div>
-
-    <div class="space-y-4">
-        <div class="bg-gray-800 p-4 rounded-xl">
-            <h3 class="text-blue-400 font-bold mb-2">Chords</h3>
-            <pre class="font-mono text-sm overflow-x-auto">{{ song.chords }}</pre>
-        </div>
-        <div class="bg-gray-800 p-4 rounded-xl">
-            <h3 class="text-blue-400 font-bold mb-2">Lyrics</h3>
-            <p class="whitespace-pre-wrap">{{ song.lyrics }}</p>
+    <!-- Top Simplified Title Bar -->
+    <div class="flex items-center gap-4 border-b border-zinc-800 pb-5">
+        <a href="{% url 'song_list' %}" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white px-4 py-2 rounded-xl text-sm transition font-medium">
+            &larr; Catalog
+        </a>
+        <div>
+            <h1 class="text-2xl font-black text-white tracking-tight">{{ song.title }}</h1>
+            <p class="text-zinc-400 text-xs">by <span class="text-zinc-200 font-semibold">{{ song.artist }}</span></p>
         </div>
     </div>
-    
-    <form action="{% url 'song_delete' song.pk %}" method="POST">
-        {% csrf_token %}
-        <button class="w-full text-red-500 text-sm">Delete Song</button>
-    </form>
+
+    <!-- Dual Workspace Columns -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        
+        <!-- Left Side: Complete Lyrics Display Frame -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 h-[70vh] flex flex-col">
+            
+            <!-- FIXED HEADER CONTROLS -->
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4 shrink-0">
+                <h3 class="text-xs font-black tracking-widest uppercase text-zinc-500">Lyrics</h3>
+                
+                <!-- Minimalist Navigation Deck -->
+                <div class="flex items-center gap-1.5 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+                    <!-- Font Scaling Buttons -->
+                    <button onclick="adjustFont(-1)" class="w-7 h-7 hover:bg-zinc-800 rounded-lg text-lg font-bold flex items-center justify-center transition text-zinc-400 hover:text-white" title="Decrease size">−</button>
+                    <button onclick="adjustFont(1)" class="w-7 h-7 hover:bg-zinc-800 rounded-lg text-lg font-bold flex items-center justify-center transition text-zinc-400 hover:text-white" title="Increase size">＋</button>
+                    
+                    <div class="w-[1px] h-4 bg-zinc-800 mx-1"></div>
+                    
+                    <!-- Speed Range Control -->
+                    <input type="range" id="scrollSpeed" min="1" max="10" value="3" class="w-12 accent-emerald-500 bg-zinc-900 h-1 rounded cursor-pointer" title="Scroll Speed">
+                    
+                    <!-- Clean Auto Scroll Button -->
+                    <button id="scrollToggleBtn" onclick="toggleAutoScroll()" class="w-24 h-7 bg-zinc-900 border border-zinc-800 hover:border-emerald-800 text-zinc-400 hover:text-emerald-400 text-xs font-black rounded-lg flex items-center justify-center transition" title="Toggle Auto Scroll">
+                        Auto Scroll
+                    </button>
+                </div>
+            </div>
+
+            <!-- SCROLLABLE CONTENT FRAME -->
+            <div id="lyricsWorkspace" class="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                <div id="lyricsContent" class="text-zinc-300 leading-loose whitespace-pre-line tracking-wide select-none pb-8" style="font-size: 16px;">
+                    {{ song.lyrics|default:"No lyrics loaded for this track." }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Chords and Progressions Sheet -->
+        <div class="bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl p-6 h-[70vh] flex flex-col">
+            
+            <!-- FIXED HEADER FOR CHORDS -->
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4 shrink-0">
+                <h3 class="text-xs font-black tracking-widest uppercase text-zinc-500">Chords Sheet</h3>
+                <span class="font-mono text-[10px] font-black bg-zinc-900 text-zinc-400 border border-zinc-800 px-2 py-0.5 rounded-md">KEY OF {{ song.key|default:"Any" }}</span>
+            </div>
+            
+            <!-- SCROLLABLE CHORDS VIEW -->
+            <div id="chordsWorkspace" class="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                {% if song.chords %}
+                    <pre id="chordsContent" class="font-mono text-sm md:text-base text-emerald-400 tracking-wide leading-loose selection:bg-emerald-900 selection:text-emerald-200" style="font-size: 15px;">{{ song.chords }}</pre>
+                {% else %}
+                    <p class="text-zinc-600 italic text-sm pt-2">No structural chords uploaded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING DRAGGABLE & RESIZABLE PICTURE-IN-PICTURE VIDEO MODULE -->
+    {% if song.youtube_id %}
+    <div id="floatingVideoWidget" class="fixed bottom-6 right-6 w-80 md:w-96 bg-zinc-900 border border-red-800 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col transition-shadow duration-300" style="bottom: 24px; right: 24px;">
+        
+        <!-- Interactive Header Drag Handle Area -->
+        <div id="widgetHeader" class="bg-zinc-950 px-4 py-2.5 border-b border-zinc-800 flex items-center justify-between cursor-move select-none touch-none">
+            <div class="flex items-center gap-2 text-zinc-500">
+                <span class="text-[10px] font-black tracking-widest pointer-events-none">YOUTUBE VIDEO</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button onclick="toggleMinimizeWidget()" class="w-6 h-6 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-md text-xs font-bold flex items-center justify-center transition">
+                    <span id="minimizeIcon">−</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Video Frame Wrapper Context Container -->
+        <div id="widgetVideoBody" class="w-full aspect-video bg-black relative">
+            <iframe id="ytIframe" class="w-full h-full" 
+                    src="https://www.youtube.com/embed/{{ song.youtube_id }}?rel=0&modestbranding=1&enablejsapi=1" 
+                    title="YouTube video player" 
+                    frameborder="0" 
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+            </iframe>
+        </div>
+        
+        <!-- Redirect Fallback Trigger -->
+        <div id="widgetFooter" class="bg-zinc-950/80 px-4 py-1.5 border-t border-zinc-800/40 text-center relative flex justify-center items-center">
+            <div id="widgetResizeHandle" class="absolute bottom-0 left-0 w-4 h-4 cursor-nesw-resize flex items-end justify-start pl-0.5 pb-0.5 text-zinc-600 hover:text-zinc-400 transition select-none touch-none" title="Resize Video">
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="0" y1="8" x2="8" y2="0" stroke="currentColor" stroke-width="1.5"/>
+                    <line x1="3" y1="8" x2="8" y2="3" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+            </div>
+            <a href="https://www.youtube.com/watch?v={{ song.youtube_id }}" target="_blank" class="text-[10px] text-zinc-500 hover:text-zinc-300 transition">
+                Watch directly on YouTube ↗
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- FLOATING DRAGGABLE METRONOME / BPM WIDGET -->
+    <div id="bpmVideoWidget" class="fixed bottom-6 left-6 w-64 bg-zinc-900 border border-green-800 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col transition-shadow duration-300" style="bottom: 24px; left: 24px;">
+        
+        <!-- Interactive Header Drag Handle Area (BPM Module) -->
+        <div id="bpmWidgetHeader" class="bg-zinc-950 px-4 py-2.5 border-b border-zinc-800 flex items-center justify-between cursor-move select-none touch-none">
+            <div class="flex items-center gap-2 text-zinc-500">
+                <span id="bpmVisualPulse" class="w-2 h-2 rounded-full bg-zinc-700 transition-colors duration-100"></span>
+                <span class="text-[10px] font-black tracking-widest pointer-events-none">METRONOME</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button onclick="toggleMinimizeBpmWidget()" class="w-6 h-6 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-md text-xs font-bold flex items-center justify-center transition">
+                    <span id="bpmMinimizeIcon">−</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- BPM Controls Interface Body -->
+        <div id="bpmWidgetBody" class="p-4 space-y-4 bg-zinc-900">
+            <!-- BPM Display Box -->
+            <div class="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl p-3">
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-zinc-500 font-bold tracking-wider uppercase">Current BPM</span>
+                    <span id="bpmDisplayValue" class="text-3xl font-black text-emerald-400 tracking-tight">120</span>
+                </div>
+                <!-- Play / Pause Metronome Trigger -->
+                <button id="metronomePlayBtn" onclick="toggleMetronome()" class="w-12 h-12 rounded-xl bg-emerald-950 border border-emerald-700 hover:border-emerald-500 text-emerald-400 hover:text-white flex items-center justify-center text-xl transition shadow-lg shadow-emerald-950/40">
+                    ▶
+                </button>
+            </div>
+
+            <!-- Manual Adjuster Slider + Tap Control -->
+            <div class="space-y-3">
+                <div>
+                    <span class="text-[10px] text-zinc-500 font-bold tracking-wider uppercase block mb-1">Tempo Slider</span>
+                    <input type="range" id="metronomeBpmSlider" min="40" max="250" value="120" oninput="updateBpmFromSlider(this.value)" class="w-full accent-emerald-500 bg-zinc-950 h-1.5 rounded cursor-pointer">
+                </div>
+
+                <!-- NEW: Volume Slider Control Layout Deck -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[10px] text-zinc-500 font-bold tracking-wider uppercase">Volume</span>
+                        <span id="metronomeVolumeDisplay" class="text-[10px] text-zinc-400 font-mono">70%</span>
+                    </div>
+                    <input type="range" id="metronomeVolumeSlider" min="0" max="100" value="70" oninput="updateVolume(this.value)" class="w-full accent-emerald-500 bg-zinc-950 h-1.5 rounded cursor-pointer">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="adjustBpmStep(-1)" class="py-1.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition">−1 BPM</button>
+                    <button onclick="adjustBpmStep(1)" class="py-1.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition">＋1 BPM</button>
+                </div>
+                
+                <!-- Tap Tempo Deck Component -->
+                <button onclick="tapTempoTrigger()" class="w-full py-3 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-emerald-400 text-xs font-black uppercase tracking-widest rounded-xl transition active:scale-[0.98]">
+                    Tap Tempo
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
+<!-- System Client Side Scripts Blocks Execution -->
 <script>
-    let timer;
+    // --- FEATURE A: TYPOGRAPHY ADJUSTMENT ENGINE ---
+    let currentLyricsSize = 16;
+    let currentChordsSize = 15;
+
+    function adjustFont(direction) {
+        currentLyricsSize += direction;
+        currentChordsSize += direction;
+        
+        if(currentLyricsSize < 12) currentLyricsSize = 12;
+        if(currentLyricsSize > 28) currentLyricsSize = 28;
+        if(currentChordsSize < 11) currentChordsSize = 11;
+        if(currentChordsSize > 26) currentChordsSize = 26;
+
+        const lyricsTarget = document.getElementById('lyricsContent');
+        const chordsTarget = document.getElementById('chordsContent');
+
+        if(lyricsTarget) lyricsTarget.style.fontSize = currentLyricsSize + 'px';
+        if(chordsTarget) chordsTarget.style.fontSize = currentChordsSize + 'px';
+    }
+
+    // --- FEATURE B: WORKSPACE AUTO SCROLL LOGIC ---
+    let scrollIntervalId = null;
+    let isScrolling = false;
+
+    function toggleAutoScroll() {
+        const btn = document.getElementById('scrollToggleBtn');
+        const lPane = document.getElementById('lyricsWorkspace'); 
+        const cPane = document.getElementById('chordsWorkspace'); 
+
+        if (isScrolling) {
+            clearInterval(scrollIntervalId);
+            scrollIntervalId = null;
+            isScrolling = false;
+            btn.className = "w-24 h-7 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-emerald-400 text-xs font-black rounded-lg flex items-center justify-center transition";
+        } else {
+            isScrolling = true;
+            btn.className = "w-24 h-7 bg-emerald-950 border border-emerald-500 text-emerald-400 text-xs font-black rounded-lg flex items-center justify-center transition shadow-lg shadow-emerald-950/50 animate-pulse";
+
+            scrollIntervalId = setInterval(() => {
+                const speed = parseFloat(document.getElementById('scrollSpeed').value) * 0.15;
+                if(lPane) lPane.scrollTop += speed;
+                if(cPane) cPane.scrollTop += speed;
+            }, 30);
+        }
+    }
+
+    // --- FEATURE C: MINIMIZE VIDEO WIDGET ENGINE ---
+    let isWidgetMinimized = false;
+    let preMinimizedWidth = '384px'; 
+
+    function toggleMinimizeWidget() {
+        const videoBody = document.getElementById('widgetVideoBody');
+        const footer = document.getElementById('widgetFooter');
+        const icon = document.getElementById('minimizeIcon');
+        const widget = document.getElementById('floatingVideoWidget');
+        const resizeHandle = document.getElementById('widgetResizeHandle');
+
+        if (!isWidgetMinimized) {
+            preMinimizedWidth = window.getComputedStyle(widget).width;
+            videoBody.style.display = 'none';
+            if(footer) footer.style.display = 'none';
+            if(resizeHandle) resizeHandle.style.display = 'none';
+            icon.textContent = '＋';
+            widget.style.width = '160px';
+            isWidgetMinimized = true;
+        } else {
+            videoBody.style.display = 'block';
+            if(footer) footer.style.display = 'flex';
+            if(resizeHandle) resizeHandle.style.display = 'flex';
+            icon.textContent = '−';
+            widget.style.width = preMinimizedWidth;
+            isWidgetMinimized = false;
+        }
+    }
+
+    // --- FEATURE D: MINIMIZE BPM WIDGET ENGINE ---
+    let isBpmWidgetMinimized = false;
+    function toggleMinimizeBpmWidget() {
+        const body = document.getElementById('bpmWidgetBody');
+        const icon = document.getElementById('bpmMinimizeIcon');
+        const widget = document.getElementById('bpmVideoWidget');
+
+        if (!isBpmWidgetMinimized) {
+            body.style.display = 'none';
+            icon.textContent = '＋';
+            widget.style.width = '160px';
+            isBpmWidgetMinimized = true;
+        } else {
+            body.style.display = 'block';
+            icon.textContent = '−';
+            widget.style.width = '240px';
+            isBpmWidgetMinimized = false;
+        }
+    }
+
+    // --- FEATURE E: REUSABLE DRAG ATTACHMENT FUNCTION ---
+    function makeWidgetDraggable(widgetElement, headerElement) {
+        let isDragging = false;
+        let startX, startY;
+
+        function dragStart(clientX, clientY) {
+            isDragging = true;
+            const iframe = document.getElementById('ytIframe');
+            if (iframe) iframe.style.pointerEvents = 'none';
+            const computedStyle = window.getComputedStyle(widgetElement);
+            startX = clientX - (parseInt(computedStyle.left) || widgetElement.offsetLeft);
+            startY = clientY - (parseInt(computedStyle.top) || widgetElement.offsetTop);
+        }
+
+        function dragMove(clientX, clientY) {
+            if (!isDragging) return;
+            let newLeft = clientX - startX;
+            let newTop = clientY - startY;
+            
+            if (newTop < 10) newTop = 10;
+            if (newLeft < 10) newLeft = 10;
+            if (newTop > window.innerHeight - 45) newTop = window.innerHeight - 45;
+            if (newLeft > window.innerWidth - 80) newLeft = window.innerWidth - 80;
+
+            widgetElement.style.left = newLeft + "px";
+            widgetElement.style.top = newTop + "px";
+            widgetElement.style.bottom = "auto";
+            widgetElement.style.right = "auto";
+        }
+
+        function dragEnd() {
+            isDragging = false;
+            const iframe = document.getElementById('ytIframe');
+            if (iframe) iframe.style.pointerEvents = 'auto';
+        }
+
+        headerElement.addEventListener('mousedown', (e) => {
+            if (e.target.closest('button') || e.target.closest('input')) return;
+            dragStart(e.clientX, e.clientY);
+            const moveHandler = (evt) => dragMove(evt.clientX, evt.clientY);
+            const upHandler = () => { dragEnd(); document.removeEventListener('mousemove', moveHandler); document.removeEventListener('mouseup', upHandler); };
+            document.addEventListener('mousemove', moveHandler);
+            document.addEventListener('mouseup', upHandler);
+            e.preventDefault();
+        });
+
+        headerElement.addEventListener('touchstart', (e) => {
+            if (e.target.closest('button') || e.target.closest('input')) return;
+            dragStart(e.touches[0].clientX, e.touches[0].clientY);
+            const moveHandler = (evt) => { if (evt.touches.length > 0) { dragMove(evt.touches[0].clientX, evt.touches[0].clientY); evt.preventDefault(); } };
+            const endHandler = () => { dragEnd(); document.removeEventListener('touchmove', moveHandler); document.removeEventListener('touchend', endHandler); };
+            document.addEventListener('touchmove', moveHandler, { passive: false });
+            document.addEventListener('touchend', endHandler);
+        });
+    }
+
+    const videoWidget = document.getElementById('floatingVideoWidget');
+    const videoHeader = document.getElementById('widgetHeader');
+    if (videoWidget && videoHeader) makeWidgetDraggable(videoWidget, videoHeader);
+
+    const bpmWidget = document.getElementById('bpmVideoWidget');
+    const bpmHeader = document.getElementById('bpmWidgetHeader');
+    if (bpmWidget && bpmHeader) makeWidgetDraggable(bpmWidget, bpmHeader);
+
+
+    // --- FEATURE F: WEB AUDIO METRONOME ENGINE LOGIC ---
+    let bpmValue = 120;
+    let metronomeVolume = 0.7; // Default ay 70% volume level
+    let isMetronomePlaying = false;
+    let metronomeIntervalId = null;
+    let tapTimes = [];
+    
+    // Web Audio Context setup container (Lazy initialization para sa browser policies)
+    let audioContext = null;
+
+    function initAudioContext() {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    function playClickSound() {
+        if (!audioContext) return;
+        
+        // Gawa ng OscillatorNode at GainNode (Vol controller) sa real-time
+        const osc = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        osc.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        osc.type = 'sine'; // Malinis na studio click tunog
+        osc.frequency.value = 1000; // Frequency pitch (1kHz para ramdam agad)
+
+        // Envelope Config para hindi pumreko ang speaker/earphones
+        const now = audioContext.currentTime;
+        gainNode.gain.setValueAtTime(metronomeVolume, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05); // Sobrang bilis na fade out (50ms click)
+
+        osc.start(now);
+        osc.stop(now + 0.05);
+    }
+
+    function updateVolume(val) {
+        metronomeVolume = parseInt(val) / 100;
+        document.getElementById('metronomeVolumeDisplay').textContent = val + '%';
+    }
+
+    function updateMetronomeVisuals() {
+        document.getElementById('bpmDisplayValue').textContent = bpmValue;
+        document.getElementById('metronomeBpmSlider').value = bpmValue;
+        if (isMetronomePlaying) {
+            restartMetronome();
+        }
+    }
+
+    function updateBpmFromSlider(val) {
+        bpmValue = parseInt(val);
+        document.getElementById('bpmDisplayValue').textContent = bpmValue;
+        if (isMetronomePlaying) restartMetronome();
+    }
+
+    function adjustBpmStep(step) {
+        bpmValue += step;
+        if (bpmValue < 40) bpmValue = 40;
+        if (bpmValue > 250) bpmValue = 250;
+        updateMetronomeVisuals();
+    }
+
     function toggleMetronome() {
-        if(timer) { clearInterval(timer); timer = null; }
-        else timer = setInterval(() => { new Audio('/static/click.mp3').play(); }, (60 / document.getElementById('bpm').value) * 1000);
+        initAudioContext(); // Gisingin ang Audio engine safe context trigger
+        const btn = document.getElementById('metronomePlayBtn');
+        
+        if (isMetronomePlaying) {
+            isMetronomePlaying = false;
+            clearInterval(metronomeIntervalId);
+            metronomeIntervalId = null;
+            btn.textContent = "▶";
+            btn.className = "w-12 h-12 rounded-xl bg-emerald-950 border border-emerald-700 hover:border-emerald-500 text-emerald-400 hover:text-white flex items-center justify-center text-xl transition shadow-lg shadow-emerald-950/40";
+        } else {
+            isMetronomePlaying = true;
+            btn.textContent = "■";
+            btn.className = "w-12 h-12 rounded-xl bg-red-950 border border-red-700 hover:border-red-500 text-red-400 hover:text-white flex items-center justify-center text-xl transition shadow-lg shadow-red-950/40";
+            
+            // Unang palo agad pagkapindot ng button
+            playClickSound();
+            triggerVisualPulse();
+            
+            restartMetronome();
+        }
+    }
+
+    function triggerVisualPulse() {
+        const pulseIndicator = document.getElementById('bpmVisualPulse');
+        pulseIndicator.className = "w-2 h-2 rounded-full bg-emerald-400 shadow-md shadow-emerald-400/80 transition-none";
+        setTimeout(() => {
+            pulseIndicator.className = "w-2 h-2 rounded-full bg-zinc-700 transition-colors duration-100";
+        }, 80);
+    }
+
+    function restartMetronome() {
+        if (metronomeIntervalId) clearInterval(metronomeIntervalId);
+        const intervalMs = (60 / bpmValue) * 1000;
+
+        metronomeIntervalId = setInterval(() => {
+            playClickSound();
+            triggerVisualPulse();
+        }, intervalMs);
+    }
+
+    function tapTempoTrigger() {
+        const now = performance.now();
+        tapTimes.push(now);
+
+        if (tapTimes.length > 4) tapTimes.shift();
+
+        if (tapTimes.length > 1) {
+            let intervals = [];
+            for (let i = 1; i < tapTimes.length; i++) {
+                intervals.push(tapTimes[i] - tapTimes[i - 1]);
+            }
+            const averageInterval = intervals.reduce((a, b) => a + b) / intervals.length;
+            let calculatedBpm = Math.round(60000 / averageInterval);
+
+            if (calculatedBpm >= 40 && calculatedBpm <= 250) {
+                bpmValue = calculatedBpm;
+                updateMetronomeVisuals();
+            }
+        }
+    }
+
+
+    // --- FEATURE G: UNIFIED VIDEO RESIZE SYSTEM ---
+    const resizeHandle = document.getElementById('widgetResizeHandle');
+    if (videoWidget && resizeHandle) {
+        let isResizing = false;
+        let startWidth, startX, startLeft;
+
+        function resizeStart(clientX) {
+            isResizing = true;
+            const iframe = document.getElementById('ytIframe');
+            if (iframe) iframe.style.pointerEvents = 'none';
+            startWidth = parseInt(window.getComputedStyle(videoWidget).width);
+            startLeft = parseInt(window.getComputedStyle(videoWidget).left) || videoWidget.offsetLeft;
+            startX = clientX;
+        }
+
+        function resizeMove(clientX) {
+            if (!isResizing || isWidgetMinimized) return;
+            const dx = clientX - startX;
+            let newWidth = startWidth - dx;
+            const minW = 240; 
+            const maxW = Math.min(600, window.innerWidth - 40);
+
+            if (newWidth < minW) newWidth = minW;
+            if (newWidth > maxW) newWidth = maxW;
+
+            const widthDifference = newWidth - startWidth;
+            videoWidget.style.width = newWidth + "px";
+            videoWidget.style.left = (startLeft - widthDifference) + "px";
+        }
+
+        function resizeEnd() { isResizing = false; const iframe = document.getElementById('ytIframe'); if (iframe) iframe.style.pointerEvents = 'auto'; }
+
+        resizeHandle.addEventListener('mousedown', function(e) {
+            resizeStart(e.clientX);
+            const onMouseMove = (evt) => resizeMove(evt.clientX);
+            const onMouseUp = () => { resizeEnd(); document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp); }
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+            e.preventDefault();
+        });
+
+        resizeHandle.addEventListener('touchstart', function(e) {
+            resizeStart(e.touches[0].clientX);
+            const onTouchMove = (evt) => { if (evt.touches.length > 0) { resizeMove(evt.touches[0].clientX); evt.preventDefault(); } }
+            const onTouchEnd = () => { resizeEnd(); document.removeEventListener('touchmove', onTouchMove); document.removeEventListener('touchend', onTouchEnd); }
+            document.addEventListener('touchmove', onTouchMove, { passive: false });
+            document.addEventListener('touchend', onTouchEnd);
+        });
     }
 </script>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #27272a;
+        border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #3f3f46;
+    }
+</style>
 {% endblock %}
