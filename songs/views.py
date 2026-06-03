@@ -6,9 +6,19 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from .models import Song
 
+# --- PRODUCTION PROXY DETECTION ---
+# PythonAnywhere free accounts require outbound traffic to use their proxy tunnel.
+IS_PYTHONANYWHERE = 'PYTHONANYWHERE_SITE' in os.environ
+PROXY_URL = 'http://proxy.server:3128'
+
 # I-PASTE MO DITO ANG MAHABANG CLIENT ACCESS TOKEN MULA SA GENIUS
 GENIUS_TOKEN = "Lwh7dOi2bTY2TCdAQpe-g5tCOwu3YoTtaPK-e9LWPVCjc8OZf40ro4pIIPb0_Sth"
-genius = lyricsgenius.Genius(GENIUS_TOKEN)
+
+# Configure lyricsgenius to handle the proxy configuration if deployed live
+if IS_PYTHONANYWHERE:
+    genius = lyricsgenius.Genius(GENIUS_TOKEN, proxies={'http': PROXY_URL, 'https': PROXY_URL})
+else:
+    genius = lyricsgenius.Genius(GENIUS_TOKEN)
 
 # Itatago nito ang mga technical logs sa terminal para malinis tignan
 genius.verbose = False 
@@ -72,7 +82,10 @@ def get_lyrics_api(request):
                 'maxResults': 5
             }
             
-            yt_res = requests.get(url, params=params).json()
+            # Conditionally attach proxy configurations for the request library
+            proxies = {'http': PROXY_URL, 'https': PROXY_URL} if IS_PYTHONANYWHERE else None
+            
+            yt_res = requests.get(url, params=params, proxies=proxies, timeout=10).json()
             
             if 'items' in yt_res and len(yt_res['items']) > 0:
                 selected_video_id = None
