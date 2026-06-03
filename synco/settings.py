@@ -7,7 +7,11 @@ SECRET_KEY = 'django-insecure-synco-super-secret-key-change-in-production'
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'syncooo.pythonanywhere.com',
+    '127.0.0.1',
+    'localhost',
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
