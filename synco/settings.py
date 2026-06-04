@@ -1,4 +1,11 @@
 import os
+import socket
+
+if "pythonanywhere" in socket.gethostname():
+    SITE_ID = 3 # Production Site: syncoo.pythonanywhere.com
+else:
+    SITE_ID = 2 # Local Site: (127.0.0.1:8000)
+
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -7,7 +14,7 @@ SECRET_KEY = 'django-insecure-synco-super-secret-key-change-in-production'
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'syncooo.pythonanywhere.com']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -98,7 +105,6 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-SITE_ID = 2
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
