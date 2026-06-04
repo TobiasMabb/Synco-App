@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}SYNCO - Sign In Error{% endblock %}
+
+{% block content %}
+<div class="min-h-[75vh] flex flex-col justify-center items-center">
+    <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-xl">
+        <div class="text-center mb-8">
+            <div class="mx-auto w-12 h-12 rounded-full bg-red-900/20 border border-red-700 flex items-center justify-center mb-4">
+                <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-extrabold text-white tracking-tight">{% trans "Sign In Error" %}</h2>
+            <p class="text-sm text-zinc-400 mt-2">{% trans "We encountered a problem with your login attempt." %}</p>
+        </div>
+
+        <div class="bg-red-900/20 border border-red-700 rounded-xl p-4 mb-6">
+            <p class="text-sm text-red-200">
+                {% trans "An error occurred while attempting to login via your third-party account. Please try again or use a different sign-in method." %}
+            </p>
+        </div>
+
+        <a href="{% url 'account_login' %}" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-brandBlue hover:bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition shadow-lg shadow-brandBlue/10">
+            Back to Login
+        </a>
+
+        <div class="text-center mt-6 border-t border-zinc-800/60 pt-4">
+            <p class="text-xs text-zinc-500">
+                Need help? Contact support if this continues.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

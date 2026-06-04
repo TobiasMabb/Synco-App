@@ -12,11 +12,18 @@
         <span class="font-bold text-xl">Synco</span>
     </nav>
 
-    <div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-zinc-900 p-6 transform -translate-x-full transition-transform duration-300 z-40">
-        <ul class="mt-10 space-y-4">
+    <div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-zinc-900 p-6 transform -translate-x-full transition-transform duration-300 z-40 flex flex-col">
+        <ul class="space-y-4">
             <li><a href="{% url 'song_list' %}">All Songs</a></li>
             <li><a href="{% url 'song_create' %}">Add New</a></li>
         </ul>
+        {% if user.is_authenticated %}
+            <div class="mt-auto pt-6 border-t border-zinc-800">
+                <a href="{% url 'account_logout' %}" class="w-full inline-flex items-center justify-center rounded-xl border border-zinc-700 bg-red-900/10 hover:bg-red-900/20 px-4 py-3 text-sm font-medium text-red-300 transition">
+                    Logout
+                </a>
+            </div>
+        {% endif %}
     </div>
 
     <main class="p-4">{% block content %}{% endblock %}</main>

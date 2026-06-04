@@ -3,3 +3,4 @@ requests
 lyricsgenius
 whitenoise
 gunicorn
+django-allauth

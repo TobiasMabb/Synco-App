@@ -1,8 +1,11 @@
 # synco/views.py
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from songs.models import Song
 from setlists.models import Setlist
+
+def login_view(request):
+    return render(request, 'accounts/login.html')
 
 @login_required
 def dashboard_view(request):

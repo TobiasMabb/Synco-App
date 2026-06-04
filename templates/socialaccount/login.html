@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}SYNCO - Confirm Google Sign In{% endblock %}
+
+{% block content %}
+<div class="min-h-[75vh] flex flex-col justify-center items-center">
+    <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-xl">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-extrabold text-white tracking-tight">Sign in with Google</h2>
+            <p class="text-sm text-zinc-400 mt-2">Confirm to continue to SYNCO</p>
+        </div>
+
+        <div class="bg-zinc-800/50 border border-zinc-700 rounded-xl p-4 mb-6">
+            <p class="text-sm text-zinc-300">
+                {% if process == "connect" %}
+                    {% blocktrans with provider.name as provider %}You are about to connect a new third-party account from {{ provider }}.{% endblocktrans %}
+                {% else %}
+                    {% blocktrans with provider.name as provider %}You are about to sign in using a third-party account from {{ provider }}.{% endblocktrans %}
+                {% endif %}
+            </p>
+        </div>
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <button type="submit" class="w-full bg-brandBlue hover:bg-blue-600 text-white font-semibold py-3 rounded-xl transition duration-200 shadow-lg shadow-brandBlue/10">
+                {% trans "Continue" %}
+            </button>
+            <a href="{% url 'account_login' %}" class="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-white/5 px-4 py-3 text-sm text-white transition hover:bg-white/10">
+                Back to Login
+            </a>
+        </form>
+
+        <div class="text-center mt-6 border-t border-zinc-800/60 pt-4">
+            <p class="text-xs text-zinc-500">
+                We won't post to any of your accounts without your permission.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

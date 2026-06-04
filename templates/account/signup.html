@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}SYNCO - Sign Up{% endblock %}
+
+{% block content %}
+<div class="min-h-[75vh] flex flex-col justify-center items-center">
+    <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-xl">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-extrabold text-white tracking-tight">Create your SYNCO account</h2>
+            <p class="text-sm text-zinc-400 mt-2">Join the platform and sync your worship ministry data.</p>
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="mb-4 rounded-xl bg-red-900/20 border border-red-700 p-4 text-sm text-red-200">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-5">
+            {% csrf_token %}
+            {{ form.hidden_fields }}
+            {% if redirect_field_value %}
+                <input type="hidden" name="next" value="{{ redirect_field_value }}" />
+            {% endif %}
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <p class="text-red-400 text-sm mt-1">{{ form.username.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <p class="text-red-400 text-sm mt-1">{{ form.email.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Password</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                    <p class="text-red-400 text-sm mt-1">{{ form.password1.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Confirm password</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                    <p class="text-red-400 text-sm mt-1">{{ form.password2.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="w-full bg-brandBlue hover:bg-blue-600 text-white font-semibold py-3 rounded-xl transition duration-200 mt-2 shadow-lg shadow-brandBlue/10">
+                Sign Up
+            </button>
+        </form>
+
+        <div class="text-center mt-6 border-t border-zinc-800/60 pt-4">
+            <p class="text-sm text-zinc-400">
+                Already have an account?
+                <a href="{% url 'account_login' %}" class="text-brandBlue font-medium hover:underline ml-1">Sign in here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
