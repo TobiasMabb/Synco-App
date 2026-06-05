@@ -1,4 +1,3 @@
-import os
 import re
 import requests
 from django.shortcuts import render, redirect, get_object_or_404
@@ -107,33 +106,30 @@ def get_lyrics(request):
             GENIUS_TOKEN = "Lwh7dOi2bTY2TCdAQpe-g5tCOwu3YoTtaPK-e9LWPVCjc8OZf40ro4pIIPb0_Sth"
             genius_client = lyricsgenius.Genius(GENIUS_TOKEN, timeout=15, retries=1)
             
-            # 🔐 Kukuha na ito ng key mula sa Variable Config ng Render Environment niyo
-            SCRAPERAPI_KEY = os.environ.get("SCRAPERAPI_KEY") 
+            # 🛠️ IPALIT DITO ANG IYONG SCRAPERAPI KEY MULA SA KANILANG DASHBOARD
+            SCRAPERAPI_KEY = "3548bf98fe767c4f7b81b3b0aac75102" 
             
-            if not SCRAPERAPI_KEY:
-                print("[SYNCO LOG] ⚠️ Missing SCRAPERAPI_KEY environment variable. Skipping Genius Proxy.")
-            else:
-                # Ipadaan ang setup ng Genius session sa proxies ng ScraperAPI para malusutan si Cloudflare
-                scraper_proxy = f"http://scraperapi:{SCRAPERAPI_KEY}@proxy-server.scraperapi.com:8001"
-                genius_client.session.proxies = {
-                    'http': scraper_proxy,
-                    'https': scraper_proxy
-                }
+            # Ipadaan ang setup ng Genius session sa proxies ng ScraperAPI para malusutan si Cloudflare
+            scraper_proxy = f"http://scraperapi:{SCRAPERAPI_KEY}@proxy-server.scraperapi.com:8001"
+            genius_client.session.proxies = {
+                'http': scraper_proxy,
+                'https': scraper_proxy
+            }
+            
+            genius_client.headers = BROWSER_HEADERS
+            genius_client.verbose = False
+            genius_client.remove_section_headers = True
+            
+            song = genius_client.search_song(clean_title, artist)
+            if song and song.lyrics:
+                clean_lyrics = song.lyrics.replace(f"{song.title} Lyrics", "", 1).strip()
+                if clean_lyrics.endswith("Embed"):
+                    clean_lyrics = clean_lyrics[:-5].strip()
+                clean_lyrics = re.sub(r'\d+$', '', clean_lyrics).strip()
                 
-                genius_client.headers = BROWSER_HEADERS
-                genius_client.verbose = False
-                genius_client.remove_section_headers = True
-                
-                song = genius_client.search_song(clean_title, artist)
-                if song and song.lyrics:
-                    clean_lyrics = song.lyrics.replace(f"{song.title} Lyrics", "", 1).strip()
-                    if clean_lyrics.endswith("Embed"):
-                        clean_lyrics = clean_lyrics[:-5].strip()
-                    clean_lyrics = re.sub(r'\d+$', '', clean_lyrics).strip()
-                    
-                    response_data['lyrics'] = clean_lyrics
-                    lyrics_found = True
-                    print("[SYNCO LOG] ✅ Success via Genius + ScraperAPI Proxy!")
+                response_data['lyrics'] = clean_lyrics
+                lyrics_found = True
+                print("[SYNCO LOG] ✅ Success via Genius + ScraperAPI Proxy!")
         except Exception as e:
             print(f"[SYNCO LOG] ❌ Genius Proxy Error: {e}")
 
@@ -177,7 +173,7 @@ def song_add(request):
         title = request.POST.get('title')
         artist = request.POST.get('artist')
         lyrics = request.POST.get('lyrics')
-        youtube_id = request.POST.get('youtube_id', '')
+        youtube_id = request.POST.get('youtube_id', '') # Kung may YouTube link integration ka
 
         if title and artist:
             # I-save ang kanta sa database
@@ -188,7 +184,7 @@ def song_add(request):
                 youtube_id=youtube_id
             )
             messages.success(request, "Song successfully added!")
-            return redirect('song_list')
+            return redirect('song_list') # Mag-re-redirect (302) pabalik sa /songs/ listahan
         else:
             messages.error(request, "Please fill out all required fields.")
 
