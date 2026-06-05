@@ -8,16 +8,13 @@ from .models import Song
 # --- PRODUCTION DETECTION ---
 IS_PYTHONANYWHERE = 'PYTHONANYWHERE_SITE' in os.environ
 PROXY_URL = 'http://proxy.server:3128'
-
-# Gagamitin lang natin ang Genius sa Local development para hindi sumasabog sa Render
 IS_LOCAL = not ('RENDER' in os.environ or IS_PYTHONANYWHERE)
 
-# Shared Browser Headers para magpanggap na totoong Chrome Browser
 BROWSER_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 }
 
-# 🛠️ I-PASTE MO DITO ANG NAKUHA MONG YOUTUBE API KEY MULA KAY GOOGLE
+# 🛠️ YOUTUBE API KEY
 YOUTUBE_API_KEY = "AIzaSyA4BiwzKN56jYWIH9BI5DzmCqBNDK9snGk"
 
 def song_list_view(request):
@@ -48,48 +45,43 @@ def get_lyrics_api(request):
         'youtube_id': ''
     }
 
-    # Linisin ang pamagat sa mga brackets (e.g. "Song (Live)" -> "Song")
     clean_title = re.sub(r'\(.*?\)|\[.*?\]', '', title).strip()
     lyrics_found = False
     proxies = {'http': PROXY_URL, 'https': PROXY_URL} if IS_PYTHONANYWHERE else None
 
     # =========================================================================
-    # --- STRATEGY A: LRCLIB FUZZY SEARCH (Pinakamataas ang chance sa Render) ---
+    # --- ENGINE 1: LRCLIB FUZZY SEARCH (Timeout lowered to 5s for fast failover) ---
     # =========================================================================
     try:
-        print(f"[SYNCO LOG] Fetching lyrics for: {artist} - {clean_title} via LRCLIB...")
+        print(f"[SYNCO LOG] [ENGINE 1] Trying LRCLIB Fuzzy for: {artist} - {clean_title}...")
         lrclib_url = "https://lrclib.net/api/search"
         params = {'q': f"{artist} {clean_title}"}
         
-        res = requests.get(lrclib_url, params=params, headers=BROWSER_HEADERS, proxies=proxies, timeout=10)
-        
+        res = requests.get(lrclib_url, params=params, headers=BROWSER_HEADERS, proxies=proxies, timeout=5)
         if res.status_code == 200:
             data = res.json()
             if data and len(data) > 0:
-                # Kuhanin ang pinaka-unang match
                 chosen_song = data[0]
                 lyrics_text = chosen_song.get('plainLyrics') or chosen_song.get('syncedLyrics')
-                
                 if lyrics_text:
                     if not chosen_song.get('plainLyrics') and chosen_song.get('syncedLyrics'):
                         lyrics_text = re.sub(r'\[\d+:\d+[^\]]*\]', '', lyrics_text).strip()
-                    
                     response_data['lyrics'] = lyrics_text
                     lyrics_found = True
-                    print("[SYNCO LOG] ✅ Success! Lyrics fetched via LRCLIB Fuzzy Search.")
+                    print("[SYNCO LOG] ✅ Success via LRCLIB Fuzzy Search!")
     except Exception as e:
-        print(f"[SYNCO LOG] ❌ LRCLIB Fuzzy Search Error: {e}")
+        print(f"[SYNCO LOG] ❌ LRCLIB Fuzzy Error: {e}")
 
     # =========================================================================
-    # --- STRATEGY B: LRCLIB EXACT SEARCH (Kung sakaling sumablay ang Fuzzy) ---
+    # --- ENGINE 2: LRCLIB EXACT SEARCH (Fallback) ---
     # =========================================================================
     if not lyrics_found:
         try:
-            print("[SYNCO LOG] Retrying via LRCLIB Exact Search...")
+            print("[SYNCO LOG] [ENGINE 2] Trying LRCLIB Exact...")
             lrclib_url = "https://lrclib.net/api/search"
             params = {'track_name': clean_title, 'artist_name': artist}
             
-            res = requests.get(lrclib_url, params=params, headers=BROWSER_HEADERS, proxies=proxies, timeout=10)
+            res = requests.get(lrclib_url, params=params, headers=BROWSER_HEADERS, proxies=proxies, timeout=5)
             if res.status_code == 200:
                 data = res.json()
                 if data and len(data) > 0:
@@ -100,19 +92,39 @@ def get_lyrics_api(request):
                             lyrics_text = re.sub(r'\[\d+:\d+[^\]]*\]', '', lyrics_text).strip()
                         response_data['lyrics'] = lyrics_text
                         lyrics_found = True
-                        print("[SYNCO LOG] ✅ Success! Lyrics fetched via LRCLIB Exact Search.")
+                        print("[SYNCO LOG] ✅ Success via LRCLIB Exact Search!")
         except Exception as e:
-            print(f"[SYNCO LOG] ❌ LRCLIB Exact Search Error: {e}")
+            print(f"[SYNCO LOG] ❌ LRCLIB Exact Error: {e}")
 
     # =========================================================================
-    # --- STRATEGY C: LOCAL GENIUS FALLBACK (Gagana lang kapag nasa PC mo) ---
+    # --- ENGINE 3: LYRICS.OVH (🔥 Bagong salbabida kapag block ang LRCLIB sa Render) ---
+    # =========================================================================
+    if not lyrics_found:
+        try:
+            print(f"[SYNCO LOG] [ENGINE 3] Trying Lyrics.ovh for: {artist} - {clean_title}...")
+            # Ligtas na URL encoding para sa mga spaces sa ngalan ng artist at kanta
+            ovh_url = f"https://api.lyrics.ovh/v1/{requests.utils.quote(artist)}/{requests.utils.quote(clean_title)}"
+            
+            res = requests.get(ovh_url, headers=BROWSER_HEADERS, proxies=proxies, timeout=6)
+            if res.status_code == 200:
+                data = res.json()
+                lyrics_text = data.get('lyrics')
+                if lyrics_text:
+                    response_data['lyrics'] = lyrics_text.strip()
+                    lyrics_found = True
+                    print("[SYNCO LOG] ✅ Success via Lyrics.ovh Engine!")
+        except Exception as e:
+            print(f"[SYNCO LOG] ❌ Lyrics.ovh Error: {e}")
+
+    # =========================================================================
+    # --- ENGINE 4: LOCAL GENIUS FALLBACK (Sa PC mo lang gagana para iwas gulo sa Render) ---
     # =========================================================================
     if not lyrics_found and IS_LOCAL:
         try:
-            print("[SYNCO LOG] Local environment detected. Trying Genius Client...")
+            print("[SYNCO LOG] [ENGINE 4] Local environment detected. Trying Genius...")
             import lyricsgenius
             GENIUS_TOKEN = "Lwh7dOi2bTY2TCdAQpe-g5tCOwu3YoTtaPK-e9LWPVCjc8OZf40ro4pIIPb0_Sth"
-            genius_client = lyricsgenius.Genius(GENIUS_TOKEN, timeout=10, retries=2)
+            genius_client = lyricsgenius.Genius(GENIUS_TOKEN, timeout=5, retries=1)
             genius_client.headers = BROWSER_HEADERS
             genius_client.verbose = False
             genius_client.remove_section_headers = True
@@ -125,12 +137,12 @@ def get_lyrics_api(request):
                 clean_lyrics = re.sub(r'\d+$', '', clean_lyrics).strip()
                 response_data['lyrics'] = clean_lyrics
                 lyrics_found = True
-                print("[SYNCO LOG] ✅ Success! Lyrics fetched via Genius (Local Fallback).")
+                print("[SYNCO LOG] ✅ Success via Genius (Local Fallback)!")
         except Exception as e:
-            print(f"[SYNCO LOG] ❌ Genius Local Fallback Error: {e}")
+            print(f"[SYNCO LOG] ❌ Genius Local Error: {e}")
 
     # =========================================================================
-    # --- HAKBANG B: KUKUNIN ANG YOUTUBE VIDEO ID ---
+    # --- YOUTUBE ID FETCHING ---
     # =========================================================================
     try:
         if YOUTUBE_API_KEY:
@@ -147,7 +159,7 @@ def get_lyrics_api(request):
                 'maxResults': 5
             }
             
-            yt_res = requests.get(url, params=params, proxies=proxies, timeout=10).json()
+            yt_res = requests.get(url, params=params, proxies=proxies, timeout=5).json()
             
             if 'items' in yt_res and len(yt_res['items']) > 0:
                 selected_video_id = None
