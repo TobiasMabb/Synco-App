@@ -12,9 +12,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-synco-super-secret-key-change-in-production'
 
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'syncooo.pythonanywhere.com']
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".onrender.com"]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
