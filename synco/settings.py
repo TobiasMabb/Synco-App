@@ -16,8 +16,6 @@ SECRET_KEY = os.environ.get(
 # ---------------------------
 # DEBUG
 # ---------------------------
-# Ginawa muna nating True kung sakaling may iba pang kulang para makita mo ang yellow screen.
-# Pero kapag okay na lahat, pwede mo itong kontrolin sa Render Environment Variables (DEBUG=False)
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 
 # ---------------------------
@@ -31,9 +29,8 @@ ALLOWED_HOSTS = [
 ]
 
 # ---------------------------
-# SITE ID (FIXED FOR ALLAUTH PRODUCTION)
+# SITE ID
 # ---------------------------
-# Siguraduhing 1 ang default para sa unang site registry sa Render/Local.
 SITE_ID = 1
 
 # ---------------------------
@@ -103,13 +100,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'synco.wsgi.application'
 
 # ---------------------------
-# DATABASE (RENDER POSTGRES + LOCAL SQLITE BACKUP - FIXED)
+# DATABASE (RENDER POSTGRES + LOCAL SQLITE BACKUP)
 # ---------------------------
+# Tinanggal ang ssl_require=True dahil auto-configured na ito ng Render string.
 if os.environ.get("DATABASE_URL"):
     DATABASES = {
         "default": dj_database_url.config(
             conn_max_age=600,
-            ssl_require=True
         )
     }
 else:
@@ -189,3 +186,27 @@ SOCIALACCOUNT_PROVIDERS = {
 # SECURITY
 # ---------------------------
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+# ---------------------------
+# LOGGING (LALABAS NA ANG ERROR SA TERMINAL MO)
+# ---------------------------
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
