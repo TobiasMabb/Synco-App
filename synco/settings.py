@@ -16,7 +16,9 @@ SECRET_KEY = os.environ.get(
 # ---------------------------
 # DEBUG
 # ---------------------------
-DEBUG = os.environ.get("DEBUG", "False") == "True"
+# Ginawa muna nating True kung sakaling may iba pang kulang para makita mo ang yellow screen.
+# Pero kapag okay na lahat, pwede mo itong kontrolin sa Render Environment Variables (DEBUG=False)
+DEBUG = os.environ.get("DEBUG", "True") == "True"
 
 # ---------------------------
 # ALLOWED HOSTS
@@ -29,12 +31,10 @@ ALLOWED_HOSTS = [
 ]
 
 # ---------------------------
-# SITE ID
+# SITE ID (FIXED FOR ALLAUTH PRODUCTION)
 # ---------------------------
-if "pythonanywhere" in socket.gethostname():
-    SITE_ID = 3
-else:
-    SITE_ID = 2
+# Siguraduhing 1 ang default para sa unang site registry sa Render/Local.
+SITE_ID = 1
 
 # ---------------------------
 # INSTALLED APPS
@@ -103,18 +103,16 @@ TEMPLATES = [
 WSGI_APPLICATION = 'synco.wsgi.application'
 
 # ---------------------------
-# DATABASE (RENDER POSTGRES + LOCAL SQLITE)
+# DATABASE (RENDER POSTGRES + LOCAL SQLITE BACKUP - FIXED)
 # ---------------------------
-DATABASES = {
-    "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
-
-# fallback if no DATABASE_URL (local dev)
-if not os.environ.get("DATABASE_URL"):
+if os.environ.get("DATABASE_URL"):
+    DATABASES = {
+        "default": dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
