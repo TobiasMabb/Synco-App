@@ -189,3 +189,11 @@ def song_add(request):
             messages.error(request, "Please fill out all required fields.")
 
     return render(request, 'songs/song_add.html')
+
+
+# =========================================================================
+# 3. URLCONF ALIASES (Para sa compatibility sa iyong synco/urls.py)
+# =========================================================================
+song_list_view = song_list
+song_detail_view = song_detail
+song_add_view = song_add
