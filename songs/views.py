@@ -10,11 +10,19 @@ from .models import Song
 IS_PYTHONANYWHERE = 'PYTHONANYWHERE_SITE' in os.environ
 PROXY_URL = 'http://proxy.server:3128'
 
-# I-PASTE MO DITO ANG MAHABANG CLIENT ACCESS TOKEN MULA SA GENIUS
-GENIUS_TOKEN = "Lwh7dOi2bTY2TCdAQpe-g5tCOwu3YoTtaPK-e9LWPVCjc8OZf40ro4pIIPb0_Sth"
+# Mas ligtas kung kukunin sa Render Environment, pero may fallback dito sa hardcoded token mo
+GENIUS_TOKEN = os.environ.get("GENIUS_ACCESS_TOKEN", "Lwh7dOi2bTY2TCdAQpe-g5tCOwu3YoTtaPK-e9LWPVCjc8OZf40ro4pIIPb0_Sth")
 
-# Initialize standard Genius client instance
-genius = lyricsgenius.Genius(GENIUS_TOKEN)
+# Initialize Genius client na may kasamang lakas sa timeout at retries para sa Render Free Tier
+genius = lyricsgenius.Genius(GENIUS_TOKEN, timeout=15, retries=3)
+
+# 🔥 ANG SUSI PARA SA RENDER: Magpanggap na totoong Chrome Browser para i-bypass ang Cloudflare block ng Genius!
+genius.headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+}
+
+# Tinatanggal ang mga [Chorus], [Verse 1] headers para malinis ang lyrics na papasok sa db niyo
+genius.remove_section_headers = True
 
 # Properly configure the proxy to its session parameters if on production
 if IS_PYTHONANYWHERE:
