@@ -68,7 +68,7 @@ def get_lyrics_api(request):
 
     # --- HAKBANG B: KUKUNIN ANG YOUTUBE VIDEO ID ---
     try:
-        if YOUTUBE_API_KEY and YOUTUBE_API_KEY != "AIzaSyA4BiwzKN56jYWIH9BI5DzmCqBNDK9snGk":
+        if YOUTUBE_API_KEY and YOUTUBE_API_KEY != "I-PASTE_DITO_YUNG_AIzaSy_KEY_MO":
             url = "https://www.googleapis.com/youtube/v3/search"
             search_query = f"{artist} {title} lyrics"
             
