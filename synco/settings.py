@@ -5,6 +5,13 @@ import dj_database_url
 from dotenv import load_dotenv
 load_dotenv()
 
+hostname = socket.gethostname()
+
+if "onrender" in hostname:
+    SITE_ID = 1  # production site (syncooo.pythonanywhere.com)
+else:
+    SITE_ID = 2  # local site (127.0.0.1:8000)
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------------------------
@@ -33,7 +40,7 @@ ALLOWED_HOSTS = [
 # ---------------------------
 # SITE ID
 # ---------------------------
-SITE_ID = 1
+# SITE_ID = 1
 
 # ---------------------------
 # INSTALLED APPS
@@ -69,6 +76,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.sites.middleware.CurrentSiteMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -160,7 +168,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/dashboard'
 LOGOUT_REDIRECT_URL = 'account_login'
 
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
@@ -176,6 +184,7 @@ ACCOUNT_SESSION_REMEMBER = True
 # ---------------------------
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_ADAPTER = 'accounts.adapter.SocialAccountAdapter'
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': [
@@ -185,11 +194,11 @@ SOCIALACCOUNT_PROVIDERS = {
         'AUTH_PARAMS': {
             'access_type': 'online',
         },
-        'APP': {
-            'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
-            'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
-            'key': ''
-        }
+        # 'APP': {
+        #     'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
+        #     'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
+        #     'key': ''
+        # }
     }
 }
 
