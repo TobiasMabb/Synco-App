@@ -1,21 +1,43 @@
 import os
 import socket
-
-if "pythonanywhere" in socket.gethostname():
-    SITE_ID = 3 # Production Site: syncoo.pythonanywhere.com
-else:
-    SITE_ID = 2 # Local Site: (127.0.0.1:8000)
-
 from pathlib import Path
+import dj_database_url
+from dotenv import load_dotenv
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-synco-super-secret-key-change-in-production'
+# ---------------------------
+# SECRET KEY
+# ---------------------------
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    "django-insecure-synco-super-secret-key-change-in-production"
+)
 
-DEBUG = True
+# ---------------------------
+# DEBUG
+# ---------------------------
+DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'syncooo.pythonanywhere.com']
+# ---------------------------
+# ALLOWED HOSTS
+# ---------------------------
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    ".onrender.com",
+    "synco-app.onrender.com"
+]
 
+# ---------------------------
+# SITE ID
+# ---------------------------
+SITE_ID = 1
+
+# ---------------------------
+# INSTALLED APPS
+# ---------------------------
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -25,13 +47,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
 
-    # Third-party auth
+    # ALLAUTH
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
 
-    # Custom Apps
+    # CUSTOM APPS
     'accounts',
     'core',
     'songs',
@@ -39,27 +61,33 @@ INSTALLED_APPS = [
     'pwa',
 ]
 
+# ---------------------------
+# MIDDLEWARE
+# ---------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    # Idinagdag para sa maayos na pag-serve ng static files sa Render production
     'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # Third-Party Auth
+
     'allauth.account.middleware.AccountMiddleware',
+
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
 ]
 
 ROOT_URLCONF = 'synco.urls'
 
+# ---------------------------
+# TEMPLATES
+# ---------------------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'], # Global templates directory
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -74,19 +102,27 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'synco.wsgi.application'
 
-# 🛠️ FIXED: Kapag nasa Render, itatabi natin ang database sa permanenteng /data/ disk folder para hindi mabura
-if os.environ.get('RENDER'):
-    DB_PATH = os.path.join('/data', 'db.sqlite3')
-else:
-    DB_PATH = BASE_DIR / 'db.sqlite3'
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': DB_PATH,
+# ---------------------------
+# DATABASE (RENDER POSTGRES + LOCAL SQLITE BACKUP)
+# ---------------------------
+# Tinanggal ang ssl_require=True dahil auto-configured na ito ng Render string.
+if os.environ.get("DATABASE_URL"):
+    DATABASES = {
+        "default": dj_database_url.config(
+            conn_max_age=600,
+        )
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
+# ---------------------------
+# PASSWORD VALIDATION
+# ---------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -94,6 +130,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# ---------------------------
+# INTERNATIONALIZATION
+# ---------------------------
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -103,17 +142,23 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Idinagdag para mas mapabilis ang loading ng static structures sa production hosting
+STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# ---------------------------
+# DEFAULT AUTO FIELD
+# ---------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ---------------------------
+# AUTHENTICATION
+# ---------------------------
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Authentication Configurations
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'account_login'
@@ -126,16 +171,31 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_SESSION_REMEMBER = True
 
+# ---------------------------
+# SOCIAL AUTH (GOOGLE)
+# ---------------------------
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        'SCOPE': ['profile', 'email'],
-        'AUTH_PARAMS': {'access_type': 'online'},
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'APP': {
+            'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
+            'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
+            'key': ''
+        }
     }
 }
 
-# Pinapayagan si YouTube na makita kung saan nanggaling ang embed request
+# ---------------------------
+# SECURITY
+# ---------------------------
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 # --- Progressive Web App Settings ---
@@ -170,3 +230,27 @@ PWA_APP_ICONS_APPLE = [
 ]
 PWA_APP_DIR = 'ltr'
 PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, 'static/js', 'serviceworker.js')
+
+# ---------------------------
+# LOGGING (LALABAS NA ANG ERROR SA TERMINAL MO)
+# ---------------------------
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}

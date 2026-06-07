@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Add New Song | SYNCO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Add New Song | SYNCO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Tugma sa scrollbar style ng main page */
@@ -31,22 +32,22 @@
             </div>
 
             <button type="button" id="btn-fetch" onclick="autoFetch()" class="w-full bg-emerald-950 border border-emerald-800 text-emerald-400 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:border-emerald-500 hover:text-white transition mb-6 shadow-lg shadow-emerald-950/20 active:scale-[0.98]">
-                ⚡ Auto-Fetch Lyrics & Video
+                ⚡ Auto-Fetch Lyrics, Video & Chords
             </button>
 
             <div class="mb-4">
                 <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">YouTube Video ID</label>
-                <input type="text" id="youtube_id" name="youtube_id" readonly class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-500 cursor-not-allowed outline-none" placeholder="Kusang papasok ang ID dito...">
+                <input type="text" id="youtube_id" name="youtube_id" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-emerald-500 transition" placeholder="Here's the Youtube ID...">
             </div>
 
             <div class="mb-4">
                 <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Lyrics</label>
-                <textarea id="lyrics" name="lyrics" rows="6" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-emerald-500 outline-none transition"></textarea>
+                <textarea id="lyrics" name="lyrics" rows="6" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-emerald-500 outline-none transition" placeholder="Lyrics will automatically appear here..."></textarea>
             </div>
 
             <div class="mb-8">
-                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Chords (Manual Paste)</label>
-                <textarea id="chords" name="chords" rows="6" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm font-mono focus:border-emerald-500 outline-none transition" placeholder="Paste chords here..."></textarea>
+                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Chords (Auto-filled / Manual Paste)</label>
+                <textarea id="chords" name="chords" rows="6" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm font-mono focus:border-emerald-500 outline-none transition" placeholder="Chords will automatically appear here..."></textarea>
             </div>
 
             <div class="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4">
@@ -62,24 +63,46 @@
             let artist = document.getElementById('artist').value.trim();
             let btn = document.getElementById('btn-fetch');
 
-            if (!title || !artist) { alert('Please enter both Title and Artist first!'); return; }
+            if (!title || !artist) { 
+                alert('Please enter both Title and Artist first!'); 
+                return; 
+            }
 
-            btn.innerText = "🔄 Fetching...";
+            btn.innerText = "🔄 Fetching everything...";
             btn.disabled = true;
 
-            fetch(`/songs/get-lyrics/?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.lyrics) document.getElementById('lyrics').value = data.lyrics;
-                    if (data.youtube_id) {
-                        document.getElementById('youtube_id').value = data.youtube_id;
+            // Gagawin nating dalawang sabay na request para makuha lahat ng kailangan
+            const fetchLyrics = fetch(`/songs/get-lyrics/?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`).then(res => res.json());
+            const fetchChordsAndVideo = fetch(`/songs/api/fetch-chords/?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`).then(res => res.json());
+
+            // Hihintayin matapos pareho ang dalawang backend views natin
+            Promise.all([fetchLyrics, fetchChordsAndVideo])
+                .then(([lyricsData, chordsVideoData]) => {
+                    
+                    // 1. Ipasok ang Lyrics kung meron
+                    if (lyricsData.lyrics) {
+                        document.getElementById('lyrics').value = lyricsData.lyrics;
+                    }
+
+                    // 2. Ipasok ang Chords mula sa DuckDuckGo
+                    if (chordsVideoData.chords) {
+                        document.getElementById('chords').value = chordsVideoData.chords;
+                    }
+
+                    // 3. Ipasok ang YouTube Video ID
+                    if (chordsVideoData.youtube_id) {
+                        document.getElementById('youtube_id').value = chordsVideoData.youtube_id;
                         btn.innerText = "✨ Fetch Successful!";
                     } else {
-                        btn.innerText = "⚠️ Video not found.";
+                        document.getElementById('youtube_id').value = "";
+                        document.getElementById('youtube_id').placeholder = "Video not found. Please paste ID manually.";
+                        btn.innerText = "⚠️ Chords/Lyrics OK, Video Not Found";
                     }
+
                     btn.disabled = false;
                 })
                 .catch(err => {
+                    console.error("Fetch error:", err);
                     btn.innerText = "❌ Fetch Failed";
                     btn.disabled = false;
                 });

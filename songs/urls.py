@@ -7,4 +7,6 @@ urlpatterns = [
     path('get-lyrics/', views.get_lyrics_api, name='get_lyrics'),
     path('<int:pk>/', views.song_detail_view, name='song_detail'),
     path('<int:pk>/delete/', views.song_delete_view, name='song_delete'),
+    path('api/fetch-chords/', views.fetch_chords_api, name='api_fetch_chords'),
+    path('songs/api/transpose/', views.transpose_api, name='transpose_api'),
 ]
