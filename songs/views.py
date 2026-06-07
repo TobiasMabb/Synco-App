@@ -4,7 +4,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
 from .models import Song  # Siguraduhing tugma sa pangalan ng iyong Model (singular)
-
+from bs4 import BeautifulSoup
+import re
 # Common Headers para sa mga out-bound API requests
 BROWSER_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -101,7 +102,7 @@ def song_detail(request, pk):  # <-- 'pk' ang ginamit para swak sa urls.py mo
     return render(request, 'songs/song_detail.html', {'song': song})
 
 
-def song_add(request):
+def add_song(request):
     if request.method == 'POST':
         title = request.POST.get('title')
         artist = request.POST.get('artist')
@@ -114,7 +115,7 @@ def song_add(request):
             return redirect('song_list')
         else:
             messages.error(request, "Please fill out all required fields.")
-    return render(request, 'songs/song_add.html')
+    return render(request, 'songs/add_song.html')
 
 
 def song_delete(request, pk):  # <-- Ibinaba rin ang delete function mo dito
@@ -126,11 +127,57 @@ def song_delete(request, pk):  # <-- Ibinaba rin ang delete function mo dito
     return render(request, 'songs/song_confirm_delete.html', {'song': song})
 
 
+
+def fetch_chords_duckduckgo(title, artist):
+    try:
+        query = f"{title} {artist} chords"
+        url = f"https://duckduckgo.com/html/?q={requests.utils.quote(query)}"
+
+        res = requests.get(url, headers=BROWSER_HEADERS, timeout=8)
+        soup = BeautifulSoup(res.text, "html.parser")
+
+        # Get first result link
+        links = soup.select(".result__a")
+
+        if not links:
+            return None
+
+        first_link = links[0]["href"]
+
+        # Follow result page
+        page = requests.get(first_link, headers=BROWSER_HEADERS, timeout=8)
+        page_soup = BeautifulSoup(page.text, "html.parser")
+
+        # Try common chord containers
+        possible_selectors = [
+            ".chords",
+            ".lyrics",
+            "pre",
+            ".content",
+            ".tab-content"
+        ]
+
+        for sel in possible_selectors:
+            el = page_soup.select_one(sel)
+            if el:
+                text = el.get_text("\n")
+                
+                # quick filter: must contain chord-like patterns
+                if re.search(r"\b[A-G](m|maj|min|dim|aug|sus|7)?\b", text):
+                    return text.strip()
+
+        return None
+
+    except Exception as e:
+        print(f"[CHORD ENGINE ERROR] {e}")
+        return None
+
+
 # =========================================================================
 # 3. EXACT ALIAS BRIDGE (Sinasalo nito ang synco/urls.py at songs/urls.py)
 # =========================================================================
 song_list_view = song_list
 song_detail_view = song_detail
-song_create_view = song_add        # <--- Heto ang hinahanap ng songs/urls.py mo!
+song_create_view = add_song       # <--- Heto ang hinahanap ng songs/urls.py mo!
 song_delete_view = song_delete    # <--- Para sa delete path mo
 get_lyrics_api = get_lyrics       # <--- Para sa AJAX get-lyrics path mo
