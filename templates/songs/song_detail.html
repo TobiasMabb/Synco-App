@@ -5,7 +5,6 @@
 {% block content %}
 <div class="relative min-h-screen text-zinc-100 space-y-6 pb-24">
 
-    <!-- Top Simplified Title Bar -->
     <div class="flex items-center gap-4 border-b border-zinc-800 pb-5">
         <a href="{% url 'song_list' %}" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white px-4 py-2 rounded-xl text-sm transition font-medium">
             &larr; Catalog
@@ -16,55 +15,44 @@
         </div>
     </div>
 
-    <!-- Dual Workspace Columns -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         
-        <!-- Left Side: Complete Lyrics Display Frame -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 h-[70vh] flex flex-col">
             
-            <!-- FIXED HEADER CONTROLS -->
             <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4 shrink-0">
                 <h3 class="text-xs font-black tracking-widest uppercase text-zinc-500">Lyrics</h3>
                 
-                <!-- Minimalist Navigation Deck -->
                 <div class="flex items-center gap-1.5 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
-                    <!-- Font Scaling Buttons -->
                     <button onclick="adjustFont(-1)" class="w-7 h-7 hover:bg-zinc-800 rounded-lg text-lg font-bold flex items-center justify-center transition text-zinc-400 hover:text-white" title="Decrease size">−</button>
                     <button onclick="adjustFont(1)" class="w-7 h-7 hover:bg-zinc-800 rounded-lg text-lg font-bold flex items-center justify-center transition text-zinc-400 hover:text-white" title="Increase size">＋</button>
                     
                     <div class="w-[1px] h-4 bg-zinc-800 mx-1"></div>
                     
-                    <!-- Speed Range Control -->
                     <input type="range" id="scrollSpeed" min="1" max="10" value="3" class="w-12 accent-emerald-500 bg-zinc-900 h-1 rounded cursor-pointer" title="Scroll Speed">
                     
-                    <!-- Clean Auto Scroll Button -->
                     <button id="scrollToggleBtn" onclick="toggleAutoScroll()" class="w-24 h-7 bg-zinc-900 border border-zinc-800 hover:border-emerald-800 text-zinc-400 hover:text-emerald-400 text-xs font-black rounded-lg flex items-center justify-center transition" title="Toggle Auto Scroll">
                         Auto Scroll
                     </button>
                 </div>
             </div>
 
-            <!-- SCROLLABLE CONTENT FRAME -->
-            <div id="lyricsWorkspace" class="flex-1 overflow-y-auto custom-scrollbar pr-1">
+            <div id="lyricsWorkspace" class="flex-1 overflow-auto custom-scrollbar pr-1">
                 <div id="lyricsContent" class="text-zinc-300 leading-loose whitespace-pre-line tracking-wide select-none pb-8" style="font-size: 16px;">
                     {{ song.lyrics|default:"No lyrics loaded for this track." }}
                 </div>
             </div>
         </div>
 
-        <!-- Right Side: Chords and Progressions Sheet -->
         <div class="bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl p-6 h-[70vh] flex flex-col">
             
-            <!-- FIXED HEADER FOR CHORDS -->
             <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4 shrink-0">
                 <h3 class="text-xs font-black tracking-widest uppercase text-zinc-500">Chords Sheet</h3>
                 <span class="font-mono text-[10px] font-black bg-zinc-900 text-zinc-400 border border-zinc-800 px-2 py-0.5 rounded-md">KEY OF {{ song.key|default:"Any" }}</span>
             </div>
             
-            <!-- SCROLLABLE CHORDS VIEW -->
-            <div id="chordsWorkspace" class="flex-1 overflow-y-auto custom-scrollbar pr-1">
+            <div id="chordsWorkspace" class="flex-1 overflow-auto custom-scrollbar pr-1">
                 {% if song.chords %}
-                    <pre id="chordsContent" class="font-mono text-sm md:text-base text-emerald-400 tracking-wide leading-loose selection:bg-emerald-900 selection:text-emerald-200" style="font-size: 15px;">{{ song.chords }}</pre>
+                    <pre id="chordsContent" class="font-mono text-sm md:text-base text-emerald-400 tracking-wide leading-relaxed whitespace-pre selection:bg-emerald-900 selection:text-emerald-200" style="font-size: 15px;">{{ song.chords }}</pre>
                 {% else %}
                     <p class="text-zinc-600 italic text-sm pt-2">No structural chords uploaded yet.</p>
                 {% endif %}
@@ -72,11 +60,9 @@
         </div>
     </div>
 
-    <!-- FLOATING DRAGGABLE & RESIZABLE PICTURE-IN-PICTURE VIDEO MODULE -->
     {% if song.youtube_id %}
     <div id="floatingVideoWidget" class="fixed bottom-6 right-6 w-80 md:w-96 bg-zinc-900 border border-red-800 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col transition-shadow duration-300" style="bottom: 24px; right: 24px;">
         
-        <!-- Interactive Header Drag Handle Area -->
         <div id="widgetHeader" class="bg-zinc-950 px-4 py-2.5 border-b border-zinc-800 flex items-center justify-between cursor-move select-none touch-none">
             <div class="flex items-center gap-2 text-zinc-500">
                 <span class="text-[10px] font-black tracking-widest pointer-events-none">YOUTUBE VIDEO</span>
@@ -88,7 +74,6 @@
             </div>
         </div>
 
-        <!-- Video Frame Wrapper Context Container -->
         <div id="widgetVideoBody" class="w-full aspect-video bg-black relative">
             <iframe id="ytIframe" class="w-full h-full" 
                     src="https://www.youtube.com/embed/{{ song.youtube_id }}?rel=0&modestbranding=1&enablejsapi=1" 
@@ -97,10 +82,9 @@
                     referrerpolicy="strict-origin-when-cross-origin"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowfullscreen>
-            </iframe>
+            </iframe >
         </div>
         
-        <!-- Redirect Fallback Trigger -->
         <div id="widgetFooter" class="bg-zinc-950/80 px-4 py-1.5 border-t border-zinc-800/40 text-center relative flex justify-center items-center">
             <div id="widgetResizeHandle" class="absolute bottom-0 left-0 w-4 h-4 cursor-nesw-resize flex items-end justify-start pl-0.5 pb-0.5 text-zinc-600 hover:text-zinc-400 transition select-none touch-none" title="Resize Video">
                 <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -115,10 +99,8 @@
     </div>
     {% endif %}
 
-    <!-- FLOATING DRAGGABLE METRONOME / BPM WIDGET -->
     <div id="bpmVideoWidget" class="fixed bottom-6 left-6 w-64 bg-zinc-900 border border-green-800 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col transition-shadow duration-300" style="bottom: 24px; left: 24px;">
         
-        <!-- Interactive Header Drag Handle Area (BPM Module) -->
         <div id="bpmWidgetHeader" class="bg-zinc-950 px-4 py-2.5 border-b border-zinc-800 flex items-center justify-between cursor-move select-none touch-none">
             <div class="flex items-center gap-2 text-zinc-500">
                 <span id="bpmVisualPulse" class="w-2 h-2 rounded-full bg-zinc-700 transition-colors duration-100"></span>
@@ -131,28 +113,23 @@
             </div>
         </div>
 
-        <!-- BPM Controls Interface Body -->
         <div id="bpmWidgetBody" class="p-4 space-y-4 bg-zinc-900">
-            <!-- BPM Display Box -->
             <div class="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl p-3">
                 <div class="flex flex-col">
                     <span class="text-[10px] text-zinc-500 font-bold tracking-wider uppercase">Current BPM</span>
                     <span id="bpmDisplayValue" class="text-3xl font-black text-emerald-400 tracking-tight">120</span>
                 </div>
-                <!-- Play / Pause Metronome Trigger -->
                 <button id="metronomePlayBtn" onclick="toggleMetronome()" class="w-12 h-12 rounded-xl bg-emerald-950 border border-emerald-700 hover:border-emerald-500 text-emerald-400 hover:text-white flex items-center justify-center text-xl transition shadow-lg shadow-emerald-950/40">
                     ▶
                 </button>
             </div>
 
-            <!-- Manual Adjuster Slider + Tap Control -->
             <div class="space-y-3">
                 <div>
                     <span class="text-[10px] text-zinc-500 font-bold tracking-wider uppercase block mb-1">Tempo Slider</span>
                     <input type="range" id="metronomeBpmSlider" min="40" max="250" value="120" oninput="updateBpmFromSlider(this.value)" class="w-full accent-emerald-500 bg-zinc-950 h-1.5 rounded cursor-pointer">
                 </div>
 
-                <!-- NEW: Volume Slider Control Layout Deck -->
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <span class="text-[10px] text-zinc-500 font-bold tracking-wider uppercase">Volume</span>
@@ -166,7 +143,6 @@
                     <button onclick="adjustBpmStep(1)" class="py-1.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition">＋1 BPM</button>
                 </div>
                 
-                <!-- Tap Tempo Deck Component -->
                 <button onclick="tapTempoTrigger()" class="w-full py-3 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-emerald-400 text-xs font-black uppercase tracking-widest rounded-xl transition active:scale-[0.98]">
                     Tap Tempo
                 </button>
@@ -176,7 +152,6 @@
 
 </div>
 
-<!-- System Client Side Scripts Blocks Execution -->
 <script>
     // --- FEATURE A: TYPOGRAPHY ADJUSTMENT ENGINE ---
     let currentLyricsSize = 16;
@@ -340,12 +315,10 @@
 
     // --- FEATURE F: WEB AUDIO METRONOME ENGINE LOGIC ---
     let bpmValue = 120;
-    let metronomeVolume = 0.7; // Default ay 70% volume level
+    let metronomeVolume = 0.7; 
     let isMetronomePlaying = false;
     let metronomeIntervalId = null;
     let tapTimes = [];
-    
-    // Web Audio Context setup container (Lazy initialization para sa browser policies)
     let audioContext = null;
 
     function initAudioContext() {
@@ -357,20 +330,18 @@
     function playClickSound() {
         if (!audioContext) return;
         
-        // Gawa ng OscillatorNode at GainNode (Vol controller) sa real-time
         const osc = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
 
         osc.connect(gainNode);
         gainNode.connect(audioContext.destination);
 
-        osc.type = 'sine'; // Malinis na studio click tunog
-        osc.frequency.value = 1000; // Frequency pitch (1kHz para ramdam agad)
+        osc.type = 'sine'; 
+        osc.frequency.value = 1000; 
 
-        // Envelope Config para hindi pumreko ang speaker/earphones
         const now = audioContext.currentTime;
         gainNode.gain.setValueAtTime(metronomeVolume, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05); // Sobrang bilis na fade out (50ms click)
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05); 
 
         osc.start(now);
         osc.stop(now + 0.05);
@@ -403,7 +374,7 @@
     }
 
     function toggleMetronome() {
-        initAudioContext(); // Gisingin ang Audio engine safe context trigger
+        initAudioContext(); 
         const btn = document.getElementById('metronomePlayBtn');
         
         if (isMetronomePlaying) {
@@ -417,7 +388,6 @@
             btn.textContent = "■";
             btn.className = "w-12 h-12 rounded-xl bg-red-950 border border-red-700 hover:border-red-500 text-red-400 hover:text-white flex items-center justify-center text-xl transition shadow-lg shadow-red-950/40";
             
-            // Unang palo agad pagkapindot ng button
             playClickSound();
             triggerVisualPulse();
             
@@ -519,6 +489,7 @@
 <style>
     .custom-scrollbar::-webkit-scrollbar {
         width: 6px;
+        height: 6px; /* Idinagdag para sa pahigang scrollbar ng chords */
     }
     .custom-scrollbar::-webkit-scrollbar-track {
         background: transparent;
