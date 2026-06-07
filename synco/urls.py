@@ -5,6 +5,7 @@ from .views import dashboard_view, login_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('pwa.urls')),
     path('', login_view, name='home'),
     path('accounts/', include('accounts.urls')),
     path('accounts/', include('allauth.urls')),
