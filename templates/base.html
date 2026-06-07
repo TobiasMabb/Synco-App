@@ -98,23 +98,23 @@
 <!-- ================= TOP BAR ================= -->
 <nav class="fixed top-0 w-full z-50 glass px-5 py-3 flex items-center justify-between">
 
-    <!-- PROFILE -->
-    <!-- PROFILE BUTTON -->
-    <button onclick="toggleSidebar()" 
-            class="w-11 h-11 rounded-full glass flex items-center justify-center border border-white/10 hover:border-green-500/40 transition">
+   <!-- PROFILE -->
+<div id="profileBtn"
+     class="w-11 h-11 rounded-full overflow-hidden glass flex items-center justify-center border border-white/10 cursor-pointer">
+
+    {% if user.is_authenticated and user.socialaccount_set.all %}
+        <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}"
+             class="w-full h-full object-cover"
+             alt="profile">
+    {% elif user.is_authenticated and user.profile.avatar %}
+        <img src="{{ user.profile.avatar.url }}"
+             class="w-full h-full object-cover"
+             alt="profile">
+    {% else %}
         <span class="text-secondary">👤</span>
-    </button>
+    {% endif %}
 
-    <!-- LOGO + NAME -->
-    <div class="flex items-center gap-2">
-        <img src="{% static 'Slogo.jpg' %}"
-             class="w-11 h-11 rounded-full border border-green-500/20"
-             alt="logo">
-
-        <span class="text-primary font-semibold tracking-wide">
-            Synco <span class="text-green">●</span>
-        </span>
-    </div>
+</div>
 
 </nav>
 

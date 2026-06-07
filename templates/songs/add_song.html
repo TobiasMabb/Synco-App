@@ -1,112 +1,172 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>Add New Song | SYNCO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Song | SYNCO</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FONT -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        /* Tugma sa scrollbar style ng main page */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
-        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+        :root {
+            --green: #1DB954;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(29,185,84,0.12), transparent 40%),
+                radial-gradient(circle at bottom, rgba(29,185,84,0.06), transparent 45%),
+                #000;
+        }
+
+        .glass {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: black;
+            font-weight: 600;
+            transition: 0.2s ease;
+        }
+
+        .btn-green:hover {
+            transform: scale(1.03);
+        }
+
+        input, textarea {
+            outline: none;
+        }
     </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 p-4 md:p-8">
-    <div class="max-w-2xl mx-auto bg-zinc-900 border border-zinc-800 p-5 sm:p-8 rounded-xl sm:rounded-2xl shadow-2xl">
-        <h2 class="text-xl sm:text-2xl font-black text-white mb-6 tracking-tight">Add New Song</h2>
-        
-        <form method="POST">
-            {% csrf_token %}
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Title</label>
-                    <input type="text" id="title" name="title" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Artist</label>
-                    <input type="text" id="artist" name="artist" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition">
-                </div>
-            </div>
 
-            <button type="button" id="btn-fetch" onclick="autoFetch()" class="w-full bg-emerald-950 border border-emerald-800 text-emerald-400 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:border-emerald-500 hover:text-white transition mb-6 shadow-lg shadow-emerald-950/20 active:scale-[0.98]">
-                ⚡ Auto-Fetch Lyrics, Video & Chords
+<body class="text-white min-h-screen px-4 py-10">
+
+<!-- HEADER -->
+<div class="max-w-3xl mx-auto mb-6">
+    <h1 class="text-2xl font-bold">
+        Add <span style="color: var(--green)">New Song</span>
+    </h1>
+    <p class="text-white/60 text-sm">
+        Create and auto-generate song data
+    </p>
+</div>
+
+<!-- CARD -->
+<div class="max-w-3xl mx-auto glass rounded-2xl p-6 md:p-8">
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- TITLE -->
+        <div>
+            <label class="text-xs text-white/60">Title</label>
+            <input name="title" id="title" required
+                placeholder="e.g. What a Beautiful Name, Oceans, Cornerstone"
+                class="w-full mt-1 p-3 rounded-xl bg-black/40 border border-white/10 focus:border-green-500">
+        </div>
+
+        <!-- ARTIST -->
+        <div>
+            <label class="text-xs text-white/60">Artist</label>
+            <input name="artist" id="artist" required
+                placeholder="e.g. Hillsong Worship, Bethel Music, Elevation Worship"
+                class="w-full mt-1 p-3 rounded-xl bg-black/40 border border-white/10 focus:border-green-500">
+        </div>
+
+        <!-- AUTO FETCH -->
+        <button type="button" id="btn-fetch" onclick="autoFetch()"
+                class="w-full mt-5 text-xs mb-5 py-4 text-sm rounded-xl btn-green">
+            Auto-Fetch
+        </button>
+
+        <!-- YOUTUBE -->
+        <div class="mb-4">
+            <label class="text-xs text-white/60">YouTube ID</label>
+            <input name="youtube_id" id="youtube_id"
+                   class="w-full mt-1 p-3 rounded-xl bg-black/40 border border-white/10 focus:border-green-500">
+        </div>
+
+        <!-- LYRICS -->
+        <div class="mb-4">
+            <label class="text-xs text-white/60">Lyrics</label>
+            <textarea name="lyrics" id="lyrics" rows="6"
+                      class="w-full mt-1 p-3 rounded-xl bg-black/40 border border-white/10 focus:border-green-500"></textarea>
+        </div>
+
+        <!-- CHORDS -->
+        <div class="mb-6">
+            <label class="text-xs text-white/60">Chords</label>
+            <textarea name="chords" id="chords" rows="6"
+                      class="w-full mt-1 p-3 rounded-xl bg-black/40 border border-white/10 focus:border-green-500 font-mono"></textarea>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="flex gap-3">
+            <a href="{% url 'song_list' %}"
+               class="w-1/2 text-center py-3 rounded-xl bg-white/10 hover:bg-white/20">
+                Cancel
+            </a>
+
+            <button class="w-1/2 py-3 rounded-xl btn-green">
+                Save Song
             </button>
+        </div>
 
-            <div class="mb-4">
-                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">YouTube Video ID</label>
-                <input type="text" id="youtube_id" name="youtube_id" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm outline-none focus:border-emerald-500 transition" placeholder="Here's the Youtube ID...">
-            </div>
+    </form>
+</div>
 
-            <div class="mb-4">
-                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Lyrics</label>
-                <textarea id="lyrics" name="lyrics" rows="6" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-emerald-500 outline-none transition" placeholder="Lyrics will automatically appear here..."></textarea>
-            </div>
+<!-- SCRIPT -->
+<script>
+function autoFetch() {
+    let title = document.getElementById('title')?.value;
+    let artist = document.getElementById('artist')?.value;
 
-            <div class="mb-8">
-                <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Chords (Auto-filled / Manual Paste)</label>
-                <textarea id="chords" name="chords" rows="6" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm font-mono focus:border-emerald-500 outline-none transition" placeholder="Chords will automatically appear here..."></textarea>
-            </div>
+    if (!title || !artist) {
+        alert("Enter title and artist first");
+        return;
+    }
 
-            <div class="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4">
-                <a href="{% url 'song_list' %}" class="w-full sm:w-1/2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 py-3 rounded-xl font-bold text-sm text-center transition">Cancel</a>
-                <button type="submit" class="w-full sm:w-1/2 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm transition">Save Song</button>
-            </div>
-        </form>
-    </div>
+    const btn = document.getElementById("btn-fetch");
+    btn.innerText = "Fetching...";
+    btn.disabled = true;
 
-    <script>
-        function autoFetch() {
-            let title = document.getElementById('title').value.trim();
-            let artist = document.getElementById('artist').value.trim();
-            let btn = document.getElementById('btn-fetch');
+    Promise.all([
+        fetch(`/songs/get-lyrics/?title=${title}&artist=${artist}`).then(r => r.json()),
+        fetch(`/songs/api/fetch-chords/?title=${title}&artist=${artist}`).then(r => r.json())
+    ])
+    .then(([lyrics, chords]) => {
 
-            if (!title || !artist) { 
-                alert('Please enter both Title and Artist first!'); 
-                return; 
-            }
-
-            btn.innerText = "🔄 Fetching everything...";
-            btn.disabled = true;
-
-            // Gagawin nating dalawang sabay na request para makuha lahat ng kailangan
-            const fetchLyrics = fetch(`/songs/get-lyrics/?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`).then(res => res.json());
-            const fetchChordsAndVideo = fetch(`/songs/api/fetch-chords/?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`).then(res => res.json());
-
-            // Hihintayin matapos pareho ang dalawang backend views natin
-            Promise.all([fetchLyrics, fetchChordsAndVideo])
-                .then(([lyricsData, chordsVideoData]) => {
-                    
-                    // 1. Ipasok ang Lyrics kung meron
-                    if (lyricsData.lyrics) {
-                        document.getElementById('lyrics').value = lyricsData.lyrics;
-                    }
-
-                    // 2. Ipasok ang Chords mula sa DuckDuckGo
-                    if (chordsVideoData.chords) {
-                        document.getElementById('chords').value = chordsVideoData.chords;
-                    }
-
-                    // 3. Ipasok ang YouTube Video ID
-                    if (chordsVideoData.youtube_id) {
-                        document.getElementById('youtube_id').value = chordsVideoData.youtube_id;
-                        btn.innerText = "✨ Fetch Successful!";
-                    } else {
-                        document.getElementById('youtube_id').value = "";
-                        document.getElementById('youtube_id').placeholder = "Video not found. Please paste ID manually.";
-                        btn.innerText = "⚠️ Chords/Lyrics OK, Video Not Found";
-                    }
-
-                    btn.disabled = false;
-                })
-                .catch(err => {
-                    console.error("Fetch error:", err);
-                    btn.innerText = "❌ Fetch Failed";
-                    btn.disabled = false;
-                });
+        if (lyrics.lyrics) {
+            document.getElementById("lyrics").value = lyrics.lyrics;
         }
-    </script>
+
+        if (chords.chords) {
+            document.getElementById("chords").value = chords.chords;
+        }
+
+        if (chords.youtube_id) {
+            document.getElementById("youtube_id").value = chords.youtube_id;
+        }
+
+        btn.innerText = "Done ✓";
+        btn.disabled = false;
+    })
+    .catch(() => {
+        btn.innerText = "Failed";
+        btn.disabled = false;
+    });
+}
+</script>
+
 </body>
 </html>
