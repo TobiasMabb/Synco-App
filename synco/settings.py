@@ -168,7 +168,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/dashboard'
 LOGOUT_REDIRECT_URL = 'account_login'
 
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
