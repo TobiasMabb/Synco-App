@@ -1,3 +1,4 @@
+import os
 import re
 import requests
 from django.shortcuts import render, redirect, get_object_or_404
@@ -5,7 +6,7 @@ from django.http import JsonResponse
 from django.contrib import messages
 from .models import Song  # Siguraduhing tugma sa pangalan ng iyong Model (singular)
 from bs4 import BeautifulSoup
-import re
+
 # Common Headers para sa mga out-bound API requests
 BROWSER_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -89,7 +90,135 @@ def get_lyrics(request):
 
 
 # =========================================================================
-# 2. STANDARD CRUD / PAGE VIEWS (Naka-align na sa 'pk' parameter ng URLs mo)
+# 2. CHORDS & YOUTUBE AUTOMATION UTILITIES
+# =========================================================================
+
+def fetch_chords_duckduckgo(title, artist):
+    """
+    Scraper para kumuha ng chords mula sa pinakaunang resulta sa DuckDuckGo.
+    """
+    try:
+        query = f"{title} {artist} chords"
+        url = f"https://duckduckgo.com/html/?q={requests.utils.quote(query)}"
+
+        res = requests.get(url, headers=BROWSER_HEADERS, timeout=8)
+        soup = BeautifulSoup(res.text, "html.parser")
+
+        links = soup.select(".result__a")
+        if not links:
+            return None
+
+        first_link = links[0]["href"]
+
+        page = requests.get(first_link, headers=BROWSER_HEADERS, timeout=8)
+        page_soup = BeautifulSoup(page.text, "html.parser")
+
+        possible_selectors = [
+            ".chords",
+            ".lyrics",
+            "pre",
+            ".content",
+            ".tab-content"
+        ]
+
+        for sel in possible_selectors:
+            el = page_soup.select_one(sel)
+            if el:
+                text = el.get_text("\n")
+                if re.search(r"\b[A-G](m|maj|min|dim|aug|sus|7)?\b", text):
+                    return text.strip()
+
+        return None
+    except Exception as e:
+        print(f"[CHORD ENGINE ERROR] {e}")
+        return None
+
+
+def fetch_youtube_video_id(title, artist):
+    """
+    Plan A: Hahanap gamit ang opisyal na YouTube API.
+    Plan B: Fallback gamit ang DuckDuckGo HTML parsing (May URL Decode Fix para sa Regex).
+    """
+    api_key = os.getenv('YOUTUBE_API_KEY')
+    query = f"{title} {artist} official audio"
+
+    # --- PLAN A: OFFICIAL YOUTUBE API ---
+    if api_key:
+        try:
+            print("[SYNCO LOG] Searching via YouTube API...")
+            url = "https://www.googleapis.com/youtube/v3/search"
+            params = {
+                'part': 'snippet',
+                'q': query,
+                'key': api_key,
+                'maxResults': 1,
+                'type': 'video'
+            }
+            res = requests.get(url, params=params, timeout=5)
+            if res.status_code == 200:
+                data = res.json()
+                items = data.get('items', [])
+                if items:
+                    return items[0]['id']['videoId']
+            elif res.status_code == 403:
+                print("⚠️ YouTube Quota Exceeded! Switching to DuckDuckGo Scraper...")
+        except Exception as e:
+            print(f"[YOUTUBE API ERROR] {e}")
+
+    # --- PLAN B: DUCKDUCKGO SCRAPER FALLBACK (FIXED!) ---
+    try:
+        print("[SYNCO LOG] Scraping YouTube ID via DuckDuckGo...")
+        ddg_url = f"https://duckduckgo.com/html/?q={requests.utils.quote(query + ' site:youtube.com')}"
+        res = requests.get(ddg_url, headers=BROWSER_HEADERS, timeout=8)
+        soup = BeautifulSoup(res.text, "html.parser")
+        links = soup.select(".result__a")
+
+        for link in links:
+            href = link.get("href", "")
+            
+            # CRITICAL FIX: I-decode ang DDG redirect link para lumabas ang malinis na 'v=VIDEO_ID'
+            decoded_href = requests.utils.unquote(href)
+            print(f"[SYNCO LOG] Inspected Link: {decoded_href}")
+
+            if 'youtube.com/watch' in decoded_href:
+                match = re.search(r'v=([^&#?]+)', decoded_href)
+                if match:
+                    video_id = match.group(1)
+                    print(f"[SYNCO LOG] ✅ Successfully extracted YT ID: {video_id}")
+                    return video_id
+            elif 'youtu.be/' in decoded_href:
+                match = re.search(r'youtu\.be/([^&#?]+)', decoded_href)
+                if match:
+                    video_id = match.group(1)
+                    print(f"[SYNCO LOG] ✅ Successfully extracted YT ID: {video_id}")
+                    return video_id
+    except Exception as e:
+        print(f"[YOUTUBE SCRAPE FALLBACK ERROR] {e}")
+
+    return ""
+
+
+def api_fetch_chords(request):
+    """
+    AJAX endpoint na tinatawag ng frontend para sabay na i-fetch ang Chords at YT Video ID.
+    """
+    title = request.GET.get('title', '').strip()
+    artist = request.GET.get('artist', '').strip()
+
+    if not title or not artist:
+        return JsonResponse({'error': 'Title and Artist are required.'}, status=400)
+
+    chords_data = fetch_chords_duckduckgo(title, artist)
+    youtube_id = fetch_youtube_video_id(title, artist)
+
+    return JsonResponse({
+        'chords': chords_data or "Chords could not be auto-extracted. Please find manually.",
+        'youtube_id': youtube_id
+    })
+
+
+# =========================================================================
+# 3. STANDARD CRUD / PAGE VIEWS (Naka-align na sa 'pk' parameter)
 # =========================================================================
 
 def song_list(request):
@@ -97,7 +226,7 @@ def song_list(request):
     return render(request, 'songs/song_list.html', {'songs': songs})
 
 
-def song_detail(request, pk):  # <-- 'pk' ang ginamit para swak sa urls.py mo
+def song_detail(request, pk):
     song = get_object_or_404(Song, id=pk)
     return render(request, 'songs/song_detail.html', {'song': song})
 
@@ -118,7 +247,7 @@ def add_song(request):
     return render(request, 'songs/add_song.html')
 
 
-def song_delete(request, pk):  # <-- Ibinaba rin ang delete function mo dito
+def song_delete(request, pk):
     song = get_object_or_404(Song, id=pk)
     if request.method == 'POST':
         song.delete()
@@ -127,57 +256,12 @@ def song_delete(request, pk):  # <-- Ibinaba rin ang delete function mo dito
     return render(request, 'songs/song_confirm_delete.html', {'song': song})
 
 
-
-def fetch_chords_duckduckgo(title, artist):
-    try:
-        query = f"{title} {artist} chords"
-        url = f"https://duckduckgo.com/html/?q={requests.utils.quote(query)}"
-
-        res = requests.get(url, headers=BROWSER_HEADERS, timeout=8)
-        soup = BeautifulSoup(res.text, "html.parser")
-
-        # Get first result link
-        links = soup.select(".result__a")
-
-        if not links:
-            return None
-
-        first_link = links[0]["href"]
-
-        # Follow result page
-        page = requests.get(first_link, headers=BROWSER_HEADERS, timeout=8)
-        page_soup = BeautifulSoup(page.text, "html.parser")
-
-        # Try common chord containers
-        possible_selectors = [
-            ".chords",
-            ".lyrics",
-            "pre",
-            ".content",
-            ".tab-content"
-        ]
-
-        for sel in possible_selectors:
-            el = page_soup.select_one(sel)
-            if el:
-                text = el.get_text("\n")
-                
-                # quick filter: must contain chord-like patterns
-                if re.search(r"\b[A-G](m|maj|min|dim|aug|sus|7)?\b", text):
-                    return text.strip()
-
-        return None
-
-    except Exception as e:
-        print(f"[CHORD ENGINE ERROR] {e}")
-        return None
-
-
 # =========================================================================
-# 3. EXACT ALIAS BRIDGE (Sinasalo nito ang synco/urls.py at songs/urls.py)
+# 4. EXACT ALIAS BRIDGE (Sinasalo nito ang URLs mo)
 # =========================================================================
 song_list_view = song_list
 song_detail_view = song_detail
-song_create_view = add_song       # <--- Heto ang hinahanap ng songs/urls.py mo!
-song_delete_view = song_delete    # <--- Para sa delete path mo
-get_lyrics_api = get_lyrics       # <--- Para sa AJAX get-lyrics path mo
+song_create_view = add_song       
+song_delete_view = song_delete    
+get_lyrics_api = get_lyrics       
+fetch_chords_api = api_fetch_chords  # <--- Ito ang tulay para sa chords at video automation!
