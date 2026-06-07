@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'core',
     'songs',
     'setlists',
+    'settings_page',
 ]
 
 # ---------------------------

@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+
+<div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- PAGE HEADER -->
+    <div>
+        <h1 class="text-3xl font-bold text-white">
+            Settings
+        </h1>
+
+        <p class="text-white/60 mt-1">
+            Manage your account and app preferences
+        </p>
+    </div>
+
+    <!-- ACCOUNT -->
+    <div class="glass rounded-2xl p-6">
+
+        <h2 class="text-green text-lg font-semibold mb-4">
+            👤 Account
+        </h2>
+
+        <div class="flex items-center gap-4">
+
+            <div class="w-16 h-16 rounded-full glass flex items-center justify-center text-2xl">
+                👤
+            </div>
+
+            <div>
+                <p class="text-white font-semibold">
+                    {{ user.username }}
+                </p>
+
+                <p class="text-white/60 text-sm">
+                    {{ user.email }}
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- APPEARANCE -->
+    <div class="glass rounded-2xl p-6">
+
+        <h2 class="text-green text-lg font-semibold mb-4">
+            🎨 Appearance
+        </h2>
+
+        <div class="space-y-3">
+
+            <label class="flex items-center justify-between">
+
+                <span class="text-white">
+                    Light Mode
+                </span>
+
+                <input type="radio" name="theme">
+
+            </label>
+
+            <label class="flex items-center justify-between">
+
+                <span class="text-white">
+                    Dark Mode
+                </span>
+
+                <input type="radio" name="theme" checked>
+
+            </label>
+
+        </div>
+
+    </div>
+
+    <!-- LANGUAGE -->
+    <div class="glass rounded-2xl p-6">
+
+        <h2 class="text-green text-lg font-semibold mb-4">
+            🌐 Language
+        </h2>
+
+        <select class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white">
+
+            <option>English</option>
+
+            <option>Tagalog</option>
+
+        </select>
+
+    </div>
+
+    <!-- ABOUT SYNCO -->
+    <div class="glass rounded-2xl p-6">
+
+        <h2 class="text-green text-lg font-semibold mb-4">
+            ℹ️ About Synco
+        </h2>
+
+        <div class="space-y-2 text-white/70 text-sm">
+
+            <p>
+                <span class="text-white font-medium">
+                    Version:
+                </span>
+                1.0
+            </p>
+
+            <p>
+                Synco is a worship music management platform designed
+                to organize songs, lyrics, chords, and setlists.
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- ABOUT US -->
+    <div class="glass rounded-2xl p-6">
+
+        <h2 class="text-green text-lg font-semibold mb-4">
+            👨‍💻 About Us
+        </h2>
+
+        <div class="space-y-2 text-white/70 text-sm">
+
+            <p class="text-white font-medium">
+                Synco Development Team
+            </p>
+
+            <p>
+                Information Technology Students
+            </p>
+
+            <p>
+                Palawan State University
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- LOGOUT -->
+    <div class="glass rounded-2xl p-6">
+
+        <h2 class="text-green text-lg font-semibold mb-4">
+            🚪 Account Actions
+        </h2>
+
+        <a href="{% url 'account_logout' %}"
+           class="w-full block text-center bg-red-500/20 border border-red-500/30 text-red-400 font-semibold py-3 rounded-xl hover:bg-red-500/30 transition">
+
+            Log Out
+
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}
