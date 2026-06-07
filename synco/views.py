@@ -1,5 +1,5 @@
 # synco/views.py
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from songs.models import Song
 from setlists.models import Setlist
@@ -19,6 +19,4 @@ def dashboard_view(request):
         'recent_setlists': recent_setlists,
     }
     
-    # MULA SA: return render(request, 'dashboard.html', context)
-    # GAWIN MONG GANITO:
     return render(request, 'core/dashboard.html', context)
