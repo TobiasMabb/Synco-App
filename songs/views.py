@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Song  # Siguraduhing tugma sa pangalan ng iyong Model (singular)
 from bs4 import BeautifulSoup
+import cloudscraper
 
 
 # Common Headers para sa mga out-bound API requests
@@ -202,36 +203,28 @@ def get_lyrics(request):
 
 
 
-
 def fetch_chords_duckduckgo(title, artist):
     def slugify(text):
         text = text.lower()
         text = text.replace('&', 'and')
-        # Linisin ang mga brackets/parenthesis na nagpapasabog sa URLs
         text = re.sub(r'\(.*?\)', '', text)
         text = re.sub(r'[^a-z0-9\s-]', '', text)
         return re.sub(r'[\s-]+', '-', text).strip('-')
 
-    # Gumawa ng malinis na bersyon para sa paghahanap
     clean_artist = re.sub(r'\(.*?\)', '', artist).strip()
     clean_title = re.sub(r'\(.*?\)', '', title).strip()
 
     artist_slug = slugify(clean_artist)
     title_slug = slugify(clean_title)
 
-    # 🚀 ANTI-BOT / CLOUDFLARE BYPASS HEADERS (Crucial for Render)
-    SAFE_HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
-        "Referer": "https://www.google.com/"
-    }
+    # 🚀 GUMAWA NG CLOUDSCRAPER INSTANCE (Bypass Cloudflare on Render Datacenter IPs)
+    scraper = cloudscraper.create_scraper(
+        browser={
+            'browser': 'chrome',
+            'platform': 'windows',
+            'desktop': True
+        }
+    )
 
     # =========================================================================
     # 💡 STRATEGY 1: ULTIMATE GUITAR DIRECT JSON SEARCH (BEST FOR RENDER)
@@ -241,7 +234,10 @@ def fetch_chords_duckduckgo(title, artist):
         query = f"{clean_artist} {clean_title}"
         ug_search_url = f"https://www.ultimate-guitar.com/search.php?search_type=title&value={requests.utils.quote(query)}"
         
-        res = requests.get(ug_search_url, headers=SAFE_HEADERS, timeout=7)
+        # Ginamit ang scraper imbes na requests.get
+        res = scraper.get(ug_search_url, timeout=10)
+        print(f"[SYNCO DEBUG] Strategy 1 Search Gateway Status: {res.status_code}")
+        
         if res.status_code == 200:
             soup = BeautifulSoup(res.text, "html.parser")
             store_div = soup.find("div", class_="js-store")
@@ -250,17 +246,15 @@ def fetch_chords_duckduckgo(title, artist):
                 json_str = store_div.get("data-content") or store_div.string
                 if json_str:
                     data = json.loads(json_str)
-                    # Hanapin ang search results
                     results = data.get("store", {}).get("page", {}).get("data", {}).get("results", [])
-                    # Kunin lang yung mga "Chords" (iwasan ang "Pro", "Official", "Tabs")
                     chord_results = [r for r in results if r.get("type") == "Chords"]
                     
                     if chord_results:
                         target_tab_url = chord_results[0].get("tab_url")
                         print(f"[SYNCO CHORD LOG] Found UG Target directly: {target_tab_url}")
                         
-                        # Kunin ang mismong chord page link na nahanap
-                        tab_res = requests.get(target_tab_url, headers=SAFE_HEADERS, timeout=7)
+                        tab_res = scraper.get(target_tab_url, timeout=10)
+                        print(f"[SYNCO DEBUG] Strategy 1 Tab Fetch Status: {tab_res.status_code}")
                         if tab_res.status_code == 200:
                             tab_soup = BeautifulSoup(tab_res.text, "html.parser")
                             tab_store = tab_soup.find("div", class_="js-store")
@@ -270,7 +264,7 @@ def fetch_chords_duckduckgo(title, artist):
                                     tab_data = json.loads(tab_json)
                                     raw_chords = tab_data['store']['page']['data']['tab_view']['wiki_tab']['content']
                                     clean_text = raw_chords.replace('[ch]', '').replace('[/ch]', '').replace('[tab]', '').replace('[/tab]', '')
-                                    print("[SYNCO CHORD LOG] ✅ BOOM! SUCCESS via Strategy 1 (UG Native Search)!")
+                                    print("[SYNCO CHORD LOG] ✅ BOOM! SUCCESS via Strategy 1 (CloudScraper UG)!")
                                     return clean_chords_formatting(clean_text)
     except Exception as e:
         print(f"[SYNCO CHORD LOG] Strategy 1 UG bypass failed: {e}")
@@ -288,8 +282,8 @@ def fetch_chords_duckduckgo(title, artist):
     
     for url in direct_urls:
         try:
-            print(f"[SYNCO CHORD LOG] Target: {url}")
-            page = requests.get(url, headers=SAFE_HEADERS, timeout=5)
+            page = scraper.get(url, timeout=7)
+            print(f"[SYNCO DEBUG] Strategy 2 Target: {url} | Status: {page.status_code}")
             if page.status_code == 200 and "chords" in page.text.lower():
                 soup = BeautifulSoup(page.text, "html.parser")
                 for sel in possible_selectors:
@@ -316,7 +310,8 @@ def fetch_chords_duckduckgo(title, artist):
     scraped_links = []
     for gateway_url in search_gateways:
         try:
-            res = requests.get(gateway_url, headers=SAFE_HEADERS, timeout=6)
+            res = scraper.get(gateway_url, timeout=8)
+            print(f"[SYNCO DEBUG] Strategy 3 Gateway: {gateway_url} | Status: {res.status_code}")
             if res.status_code == 200:
                 soup = BeautifulSoup(res.text, "html.parser")
                 links = soup.select(".result__a") or soup.find_all("a", href=True)
@@ -344,10 +339,10 @@ def fetch_chords_duckduckgo(title, artist):
     print(f"[SYNCO CHORD LOG] Search Engine extracted {len(scraped_links)} candidate targets.")
 
     for target_url in scraped_links[:4]:
-        print(f"[SYNCO CHORD LOG] Crawling target: {target_url}")
         try:
             if "ultimate-guitar.com" in target_url:
-                ug_page = requests.get(target_url, headers=SAFE_HEADERS, timeout=6)
+                ug_page = scraper.get(target_url, timeout=8)
+                print(f"[SYNCO DEBUG] Strategy 3 Dynamic Target Status: {ug_page.status_code}")
                 if ug_page.status_code == 200:
                     ug_soup = BeautifulSoup(ug_page.text, "html.parser")
                     ug_store = ug_soup.select_one(".js-store") or ug_soup.find(class_="js-store")
@@ -357,11 +352,11 @@ def fetch_chords_duckduckgo(title, artist):
                             data = json.loads(json_str)
                             raw_chords = data['store']['page']['data']['tab_view']['wiki_tab']['content']
                             clean_text = raw_chords.replace('[ch]', '').replace('[/ch]', '').replace('[tab]', '').replace('[/tab]', '')
-                            print(f"[SYNCO CHORD LOG] ✅ BOOM! SUCCESS! Extracted from Dynamic UG Link: {target_url}")
                             return clean_chords_formatting(clean_text)
                 continue
 
-            page = requests.get(target_url, headers=SAFE_HEADERS, timeout=5)
+            page = scraper.get(target_url, timeout=7)
+            print(f"[SYNCO DEBUG] Strategy 3 Standard Target Status: {page.status_code}")
             if page.status_code == 200:
                 page_soup = BeautifulSoup(page.text, "html.parser")
                 for sel in possible_selectors:
@@ -369,7 +364,6 @@ def fetch_chords_duckduckgo(title, artist):
                     if el:
                         text = el.get_text("\n")
                         if re.search(r"\b[A-G](m|maj|min|dim|aug|sus|7)?\b", text):
-                            print(f"[SYNCO CHORD LOG] ✅ BOOM! SUCCESS! Auto-scraped chords from: {target_url}")
                             return clean_chords_formatting(text)
         except Exception as crawl_err:
             print(f"[SYNCO CHORD LOG] Skipping {target_url}: {crawl_err}")
@@ -380,7 +374,8 @@ def fetch_chords_duckduckgo(title, artist):
     print(f"[SYNCO CHORD LOG] Strategy 4: Deploying Final Resort (Chordie Search)...")
     try:
         chordie_url = f"https://www.chordie.com/search.php?q={requests.utils.quote(clean_artist + ' ' + clean_title)}"
-        res = requests.get(chordie_url, headers=SAFE_HEADERS, timeout=5)
+        res = scraper.get(chordie_url, timeout=7)
+        print(f"[SYNCO DEBUG] Strategy 4 Search Status: {res.status_code}")
         if res.status_code == 200:
             soup = BeautifulSoup(res.text, "html.parser")
             for a in soup.find_all("a", href=True):
@@ -388,13 +383,13 @@ def fetch_chords_duckduckgo(title, artist):
                 if "chord.pere" in href or "song.php" in href:
                     if not href.startswith("http"):
                         href = "https://www.chordie.com/" + href.lstrip("/")
-                    page = requests.get(href, headers=SAFE_HEADERS, timeout=4)
+                    page = scraper.get(href, timeout=6)
+                    print(f"[SYNCO DEBUG] Strategy 4 Target Page Status: {page.status_code}")
                     if page.status_code == 200:
                         el = BeautifulSoup(page.text, "html.parser").select_one("pre")
                         if el:
                             text = el.get_text("\n")
                             if re.search(r"\b[A-G](m|maj|min|dim|aug|sus|7)?\b", text):
-                                print(f"[SYNCO CHORD LOG] ✅ SUCCESS! Extracted from Final Resort Chordie: {href}")
                                 return clean_chords_formatting(text)
     except Exception:
         pass
