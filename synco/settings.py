@@ -31,6 +31,15 @@ ALLOWED_HOSTS = [
 ]
 
 # ---------------------------
+# CSRF & PROXY SECURITY (FIX FOR GOOGLE AUTH SIGN IN ERROR)
+# ---------------------------
+CSRF_TRUSTED_ORIGINS = [
+    "https://synco-app.onrender.com",
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# ---------------------------
 # SITE ID
 # ---------------------------
 SITE_ID = 1
@@ -105,7 +114,6 @@ WSGI_APPLICATION = 'synco.wsgi.application'
 # ---------------------------
 # DATABASE (RENDER POSTGRES + LOCAL SQLITE BACKUP)
 # ---------------------------
-# Tinanggal ang ssl_require=True dahil auto-configured na ito ng Render string.
 if os.environ.get("DATABASE_URL"):
     DATABASES = {
         "default": dj_database_url.config(
@@ -171,9 +179,13 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_SESSION_REMEMBER = True
 
+# FIX FOR CONNECTION REFUSED (Prints emails to Render logs instead of crashing)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 # ---------------------------
 # SOCIAL AUTH (GOOGLE)
 # ---------------------------
+# TInanggal ang 'APP' block dito dahil sa Django Admin na ito inaayos para iwas salungatan
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_PROVIDERS = {
@@ -184,11 +196,6 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
-        },
-        'APP': {
-            'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
-            'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
-            'key': ''
         }
     }
 }
@@ -232,7 +239,7 @@ PWA_APP_DIR = 'ltr'
 PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, 'static/js', 'serviceworker.js')
 
 # ---------------------------
-# LOGGING (LALABAS NA ANG ERROR SA TERMINAL MO)
+# LOGGING
 # ---------------------------
 LOGGING = {
     'version': 1,
