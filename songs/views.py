@@ -555,6 +555,7 @@ def add_song(request):
             formatted_chords = clean_chords_formatting(chords) if chords else ""
             
             Song.objects.create(
+                user=request.user,
                 title=title, 
                 artist=artist, 
                 lyrics=lyrics, 
