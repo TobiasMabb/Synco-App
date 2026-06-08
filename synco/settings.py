@@ -180,8 +180,16 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_SESSION_REMEMBER = True
 
+
 # FIX FOR CONNECTION REFUSED (Prints emails to Render logs instead of crashing)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Gawin itong SMTP para sa totoong pag-send
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'webdev.vincii@gmail.com' # Dito ang email mo
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD') # Hihilahin nito ang password sa .env
+DEFAULT_FROM_EMAIL = 'Synco Support <your_email@gmail.com>'
 
 # ---------------------------
 # SOCIAL AUTH (GOOGLE)
@@ -267,3 +275,5 @@ LOGGING = {
         },
     },
 }
+
+print(f"DEBUG: Password loaded: {'Yes' if os.environ.get('EMAIL_HOST_PASSWORD') else 'No'}")
