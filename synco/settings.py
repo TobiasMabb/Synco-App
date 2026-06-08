@@ -187,14 +187,17 @@ DEFAULT_FROM_EMAIL = f"Synco App <{os.environ.get('EMAIL_HOST_USER')}>"
 
 # FIX FOR CONNECTION REFUSED (Prints emails to Render logs instead of crashing)
 # Gawin itong SMTP para sa totoong pag-send
+# SMTP Email Configuration (Port 465 SSL Setup)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com') # Palitan depende sa provider mo
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 465))  # Ginawang 465
+
+# Invert TLS and SSL for Port 465
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False') == 'True'
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'True') == 'True'  # Ginawang True ang SSL
+
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-
-# MAGLAGAY NG TIMEOUT: Para kung pumalya ang email provider, hihinto agad si Django at hindi hihintayin si Gunicorn
 EMAIL_TIMEOUT = 10
 # ---------------------------
 # SOCIAL AUTH (GOOGLE)
