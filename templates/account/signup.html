@@ -4,12 +4,11 @@
 {% block title %}SYNCO - Sign Up{% endblock %}
 
 {% block content %}
-<!-- PINAKAMALUPIT NA FIX: Pinupuwersa nitong maging modern at dark mode ang mga inputs ni Django -->
 <style>
     .custom-django-input input {
         width: 100% !important;
-        background-color: #09090b !important; /* zinc-950 */
-        border: 1px solid #27272a !important; /* zinc-800 */
+        background-color: rgba(9, 9, 11, 0.8) !important; /* zinc-950 with transparency */
+        border: 1px solid rgba(39, 39, 42, 0.8) !important; /* zinc-800 */
         border-radius: 0.75rem !important; /* rounded-xl */
         padding: 0.75rem 1rem !important; /* px-4 py-3 */
         color: #ffffff !important;
@@ -18,140 +17,183 @@
         outline: none !important;
     }
     .custom-django-input input:focus {
-        border-color: #3b82f6 !important; /* blue-500 */
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15) !important;
+        border-color: #1DB954 !important; /* SYNCO Accent Green */
+        box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.15) !important;
     }
     .custom-django-input input::placeholder {
         color: #52525b !important; /* zinc-600 */
     }
+    
+    /* 👁️ Dinagdag natin para hindi pumasok ang password text sa ilalim ng mata natin */
+    .password-wrapper input {
+        padding-right: 3rem !important;
+    }
+
+    /* Inayos para sa Django default ul/li error lists */
+    .custom-error-list ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+    .custom-error-list li {
+        margin-top: 0.25rem;
+    }
 </style>
 
-<div class="min-h-[85vh] flex flex-col justify-center items-center px-4 py-8 relative overflow-hidden">
-    <!-- Background Glow Effects -->
-    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 sm:w-96 sm:h-96 bg-blue-500/10 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none"></div>
+<div class="min-h-[80vh] flex flex-col justify-center items-center relative overflow-hidden">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 sm:w-[500px] sm:h-[500px] bg-green-500/5 rounded-full blur-[120px] pointer-events-none"></div>
 
-    <!-- Main Card Container -->
-    <div class="w-full max-w-md bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 p-6 sm:p-8 rounded-2xl shadow-2xl relative z-10 transition-all duration-300 hover:border-zinc-700/50">
+    <div class="w-full max-w-md bg-zinc-900/60 backdrop-blur-xl border border-white/5 p-6 sm:p-8 rounded-2xl shadow-2xl relative z-10 transition-all duration-300 hover:border-white/10">
         
-        <!-- Header -->
         <div class="text-center mb-6 sm:mb-8">
-            <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+            <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
                 Create your account
             </h2>
-            <p class="text-xs sm:text-sm text-zinc-400 mt-2">Join SYNCO and sync your worship ministry data.</p>
+            <p class="text-xs sm:text-sm text-white/50 mt-2">Join SYNCO and sync your worship ministry data.</p>
         </div>
 
-        <!-- Non-Field Errors -->
         {% if form.non_field_errors %}
-        <div class="mb-5 rounded-xl bg-red-500/10 border border-red-500/30 p-3 sm:p-4 text-xs sm:text-sm text-red-400 flex items-center gap-2">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="mb-5 rounded-xl bg-red-500/10 border border-red-500/20 p-3.5 text-xs sm:text-sm text-red-400 flex items-start gap-2.5">
+            <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
-            <span>{{ form.non_field_errors|striptags }}</span>
+            <span class="leading-relaxed">{{ form.non_field_errors|striptags }}</span>
         </div>
         {% endif %}
 
-        <!-- Main Form -->
         <form method="POST" class="space-y-4">
             {% csrf_token %}
-            {{ form.hidden_fields }}
+            
+            {% for field in form.hidden_fields %}
+                {{ field }}
+            {% endfor %}
+            
             {% if redirect_field_value %}
                 <input type="hidden" name="next" value="{{ redirect_field_value }}" />
             {% endif %}
 
-            <!-- Username -->
             <div class="space-y-1.5">
-                <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-zinc-400">Username</label>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">Username</label>
                 <div class="custom-django-input">
                     {{ form.username }}
                 </div>
                 {% if form.username.errors %}
-                    <p class="text-red-400 text-xs flex items-center gap-1 mt-1">
-                        <span class="inline-block w-1.5 h-1.5 bg-red-400 rounded-full"></span>
-                        {{ form.username.errors|striptags }}
-                    </p>
+                <p class="text-red-400 text-xs flex items-center gap-1.5 mt-1 px-1">
+                    <span class="inline-block w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                    {{ form.username.errors|striptags }}
+                </p>
                 {% endif %}
             </div>
 
-            <!-- Email Address -->
             <div class="space-y-1.5">
-                <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-zinc-400">Email Address</label>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">Email Address</label>
                 <div class="custom-django-input">
                     {{ form.email }}
                 </div>
                 {% if form.email.errors %}
-                    <p class="text-red-400 text-xs flex items-center gap-1 mt-1">
-                        <span class="inline-block w-1.5 h-1.5 bg-red-400 rounded-full"></span>
-                        {{ form.email.errors|striptags }}
-                    </p>
+                <p class="text-red-400 text-xs flex items-center gap-1.5 mt-1 px-1">
+                    <span class="inline-block w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                    {{ form.email.errors|striptags }}
+                </p>
                 {% endif %}
             </div>
 
-            <!-- Password -->
             <div class="space-y-1.5">
-                <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-zinc-400">Password</label>
-                <div class="custom-django-input">
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">Password</label>
+                <div class="custom-django-input password-wrapper relative">
                     {{ form.password1 }}
+                    
+                    <button type="button" onclick="togglePassword('id_password1', 'eye-open-1', 'eye-closed-1')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-zinc-500 hover:text-zinc-300 transition focus:outline-none">
+                        <svg id="eye-open-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <svg id="eye-closed-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 hidden">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                        </svg>
+                    </button>
                 </div>
                 {% if form.password1.errors %}
-                    <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mt-1.5">
-                        <p class="text-red-400 text-xs leading-relaxed space-y-1">
-                            {{ form.password1.errors|striptags }}
-                        </p>
-                    </div>
+                <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mt-1.5 text-xs text-red-400 custom-error-list leading-relaxed">
+                    {{ form.password1.errors }}
+                </div>
                 {% endif %}
             </div>
 
-            <!-- Confirm Password -->
             <div class="space-y-1.5">
-                <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-zinc-400">Confirm Password</label>
-                <div class="custom-django-input">
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">Confirm Password</label>
+                <div class="custom-django-input password-wrapper relative">
                     {{ form.password2 }}
+                    
+                    <button type="button" onclick="togglePassword('id_password2', 'eye-open-2', 'eye-closed-2')" class="absolute inset-y-0 right-0 flex items-center pr-4 text-zinc-500 hover:text-zinc-300 transition focus:outline-none">
+                        <svg id="eye-open-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <svg id="eye-closed-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 hidden">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                        </svg>
+                    </button>
                 </div>
                 {% if form.password2.errors %}
-                    <p class="text-red-400 text-xs flex items-center gap-1 mt-1">
-                        <span class="inline-block w-1.5 h-1.5 bg-red-400 rounded-full"></span>
-                        {{ form.password2.errors|striptags }}
-                    </p>
+                <p class="text-red-400 text-xs flex items-center gap-1.5 mt-1 px-1">
+                    <span class="inline-block w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                    {{ form.password2.errors|striptags }}
+                </p>
                 {% endif %}
             </div>
 
-            <!-- Submit Button (Pinalitan ng standard bg-blue-600 para siguradong may kulay!) -->
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition duration-200 mt-4 shadow-lg shadow-blue-600/10 active:scale-[0.98] transform text-sm sm:text-base cursor-pointer">
+            <button type="submit" class="w-full bg-green-900 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition duration-200 mt-5 text-sm sm:text-base cursor-pointer shadow-lg shadow-green-900/10">
                 Sign Up
             </button>
         </form>
 
-        <!-- Divider -->
         <div class="relative my-6">
             <div class="absolute inset-0 flex items-center" aria-hidden="true">
-                <div class="w-full border-t border-zinc-800"></div>
+                <div class="w-full border-t border-white/5"></div>
             </div>
-            <div class="relative flex justify-center text-[10px] sm:text-xs uppercase tracking-wider">
-                <span class="bg-zinc-900 px-3 text-zinc-500 font-medium">Or continue with</span>
+            <div class="relative flex justify-center text-[10px] uppercase tracking-wider">
+                <span class="bg-zinc-900/90 px-3 text-white/30 font-medium">Or continue with</span>
             </div>
         </div>
 
-        <!-- Google OAuth Button -->
         <div class="mb-6">
-            <a href="{% provider_login_url 'google' %}" class="w-full inline-flex items-center justify-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950/50 px-4 py-3 text-sm text-zinc-200 transition duration-200 hover:bg-zinc-800/80 hover:text-white hover:border-zinc-700 active:scale-[0.98] transform">
+            <a href="{% provider_login_url 'google' %}" class="w-full inline-flex items-center justify-center gap-3 rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-sm text-white/80 transition duration-200 hover:bg-white/10 hover:text-white active:scale-[0.98] transform">
                 <svg class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.22-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
                 Google Account
             </a>
         </div>
 
-        <!-- Footer -->
-        <div class="text-center border-t border-zinc-800/80 pt-4">
-            <p class="text-xs sm:text-sm text-zinc-400">
-                Already have an account?
-                <a href="{% url 'account_login' %}" class="text-brandBlue font-medium hover:underline ml-1 hover:text-blue-400 transition">Sign in here</a>
-            </p>
+        <div class="text-center border-t border-white/5 pt-4">
+            <p class="text-xs sm:text-sm text-white/40">Already have an account?</p>
+            <a href="{% url 'account_login' %}" class="text-sm text-green-700 font-medium underline ml-1 hover:underline transition">Sign in here</a>
         </div>
     </div>
 </div>
+
+<script>
+    function togglePassword(fieldId, openEyeId, closedEyeId) {
+        // Gagamit ng querySelector dahil minsan iba ang render name ng element sa Django default forms
+        const inputField = document.getElementById(fieldId) || document.querySelector(`[name="${fieldId.replace('id_', '')}"]`);
+        const eyeOpen = document.getElementById(openEyeId);
+        const eyeClosed = document.getElementById(closedEyeId);
+        
+        if (inputField) {
+            if (inputField.type === 'password') {
+                inputField.type = 'text';
+                eyeOpen.classList.add('hidden');
+                eyeClosed.classList.remove('hidden');
+            } else {
+                inputField.type = 'password';
+                eyeOpen.classList.remove('hidden');
+                eyeClosed.classList.add('hidden');
+            }
+        }
+    }
+</script>
 {% endblock %}

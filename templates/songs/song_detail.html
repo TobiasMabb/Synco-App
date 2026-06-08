@@ -3,7 +3,7 @@
 {% block title %}SYNCO - {{ song.title }}{% endblock %}
 
 {% block content %}
-<div class="relative min-h-screen text-zinc-100 space-y-6 pb-24">
+<div class="relative min-h-screen text-zinc-100 space-y-5 pb-24">
 
     <div class="flex items-center gap-4 border-b border-zinc-800 pb-5">
         <a href="{% url 'song_list' %}" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white px-4 py-2 rounded-xl text-sm transition font-medium">
@@ -15,13 +15,35 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+    <div id="performanceStage" class="space-y-5 transition-all duration-300 rounded-2xl">
         
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 h-[70vh] flex flex-col">
+        <div class="max-w-4xl mx-auto bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-xl backdrop-blur-md">
             
-            <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4 shrink-0">
-                <h3 class="text-xs font-black tracking-widest uppercase text-zinc-500">Lyrics</h3>
+    <div class="flex gap-1.5 bg-zinc-950 p-1 rounded-xl border border-zinc-850">
+        <button id="tab-lyrics-btn" onclick="switchTab('lyrics')" class="flex items-center gap-1.5 px-4 py-2 text-xs font-black tracking-wider uppercase rounded-lg transition-all duration-200 bg-zinc-800 text-white border border-zinc-700/40 shadow">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-zinc-400 group-hover:text-white transition-colors">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+            </svg>
+            Lyrics
+        </button>
+        
+        <button id="tab-chords-btn" onclick="switchTab('chords')" class="flex items-center gap-1.5 px-4 py-2 text-xs font-black tracking-wider uppercase rounded-lg transition-all duration-200 text-zinc-400 hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 text-zinc-400 group-hover:text-white transition-colors">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 9l10.5-3m0 0v11.25a3 3 0 11-3-3h3m0-8.25V16.5" />
+            </svg>
+            Chords
+        </button>
+    </div>
+
+            <div class="flex items-center flex-wrap gap-2.5">
                 
+                <div id="global-transpose-ctrl" class="hidden items-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800 transition-all duration-300">
+                    <span class="text-[9px] font-black tracking-widest text-zinc-500 pl-2 pr-1 uppercase">Transpose</span>
+                    <button onclick="transposeChords(-1)" class="w-6 h-6 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white font-bold flex items-center justify-center transition" title="Transpose Down">−</button>
+                    <span id="transposeStep" class="font-mono text-xs font-black text-emerald-400 w-5 text-center">0</span>
+                    <button onclick="transposeChords(1)" class="w-6 h-6 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white font-bold flex items-center justify-center transition" title="Transpose Up">＋</button>
+                </div>
+
                 <div class="flex items-center gap-1.5 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
                     <button onclick="adjustFont(-1)" class="w-7 h-7 hover:bg-zinc-800 rounded-lg text-lg font-bold flex items-center justify-center transition text-zinc-400 hover:text-white" title="Decrease size">−</button>
                     <button onclick="adjustFont(1)" class="w-7 h-7 hover:bg-zinc-800 rounded-lg text-lg font-bold flex items-center justify-center transition text-zinc-400 hover:text-white" title="Increase size">＋</button>
@@ -33,46 +55,47 @@
                     <button id="scrollToggleBtn" onclick="toggleAutoScroll()" class="w-24 h-7 bg-zinc-900 border border-zinc-800 hover:border-emerald-800 text-zinc-400 hover:text-emerald-400 text-xs font-black rounded-lg flex items-center justify-center transition" title="Toggle Auto Scroll">
                         Auto Scroll
                     </button>
-                </div>
-            </div>
 
-            <div id="lyricsWorkspace" class="flex-1 overflow-auto custom-scrollbar pr-1">
-                <div id="lyricsContent" class="text-zinc-300 leading-loose whitespace-pre-line tracking-wide select-none pb-8" style="font-size: 16px;">
-                    {{ song.lyrics|default:"No lyrics loaded for this track." }}
+                    <div class="w-[1px] h-4 bg-zinc-800 mx-1"></div>
+
+                    <button id="fullscreenToggleBtn" onclick="toggleFullscreen()" class="w-9 h-7 bg-zinc-900 hover:bg-zinc-800 border border-zinc-850 hover:border-zinc-700 text-zinc-400 hover:text-white rounded-lg flex items-center justify-center transition" title="Toggle Fullscreen Mode">
+                        <svg id="fullscreenIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m5.25 11.25v-4.5m0 4.5h-4.5m4.5 0l-6-6" />
+                        </svg>
+                    </button>
                 </div>
+
             </div>
         </div>
 
-        <div class="bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl p-6 h-[70vh] flex flex-col">
-            
-            <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4 shrink-0">
-                <h3 class="text-xs font-black tracking-widest uppercase text-zinc-500">Chords Sheet</h3>
+        <div id="mainWorkspaceContainer" class="max-w-4xl mx-auto bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden h-[70vh] flex flex-col transition-all duration-300">
+            <div class="flex-1 flex flex-col min-h-0 relative">
                 
-                <div class="flex items-center gap-3">
-                    <div class="flex items-center gap-1 bg-zinc-900 p-1 rounded-lg border border-zinc-800">
-                        <span class="text-[9px] font-black tracking-widest text-zinc-500 pl-1 pr-1">TRANSPOSE</span>
-                        <button onclick="transposeChords(-1)" class="w-6 h-6 bg-zinc-950 hover:bg-zinc-800 rounded text-zinc-400 hover:text-white font-bold flex items-center justify-center transition" title="Transpose Down">−</button>
-                        <span id="transposeStep" class="font-mono text-xs font-black text-emerald-400 w-5 text-center">0</span>
-                        <button onclick="transposeChords(1)" class="w-6 h-6 bg-zinc-950 hover:bg-zinc-800 rounded text-zinc-400 hover:text-white font-bold flex items-center justify-center transition" title="Transpose Up">＋</button>
+                <div id="panel-lyrics" class="flex flex-col flex-1 p-6 min-h-0">
+                    <div id="lyricsWorkspace" class="flex-1 overflow-auto custom-scrollbar pr-1">
+                        <div id="lyricsContent" class="text-zinc-300 leading-loose whitespace-pre-line tracking-wide select-none pb-8" style="font-size: 16px;">
+                            {{ song.lyrics|default:"No lyrics loaded for this track." }}
+                        </div>
                     </div>
-
-                    <span class="font-mono text-[10px] font-black bg-zinc-900 text-zinc-400 border border-zinc-800 px-2 py-1.5 rounded-md">KEY OF {{ song.key|default:"Any" }}</span>
                 </div>
-            </div>
-            
-            <div id="chordsWorkspace" class="flex-1 overflow-auto custom-scrollbar pr-1">
-                {% if song.chords %}
-                    <pre id="chordsContent" class="font-mono text-sm md:text-base text-emerald-400 tracking-wide leading-relaxed whitespace-pre selection:bg-emerald-900 selection:text-emerald-200" style="font-size: 15px;">{{ song.chords }}</pre>
-                {% else %}
-                    <p class="text-zinc-600 italic text-sm pt-2">No structural chords uploaded yet.</p>
-                {% endif %}
+
+                <div id="panel-chords" class="hidden flex flex-col flex-1 p-6 min-h-0 bg-zinc-950/10">
+                    <div id="chordsWorkspace" class="flex-1 overflow-auto custom-scrollbar pr-1">
+                        {% if song.chords %}
+                            <pre id="chordsContent" class="font-mono text-sm md:text-base text-emerald-400 tracking-wide leading-relaxed whitespace-pre selection:bg-emerald-900 selection:text-emerald-200 p-4 bg-zinc-950/40 rounded-xl border border-zinc-900" style="font-size: 15px;">{{ song.chords }}</pre>
+                        {% else %}
+                            <p class="text-zinc-600 italic text-sm pt-2">No structural chords uploaded yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
             </div>
         </div>
+
     </div>
 
     {% if song.youtube_id %}
     <div id="floatingVideoWidget" class="fixed bottom-6 right-6 w-80 md:w-96 bg-zinc-900 border border-red-800 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col transition-shadow duration-300" style="bottom: 24px; right: 24px;">
-        
         <div id="widgetHeader" class="bg-zinc-950 px-4 py-2.5 border-b border-zinc-800 flex items-center justify-between cursor-move select-none touch-none">
             <div class="flex items-center gap-2 text-zinc-500">
                 <span class="text-[10px] font-black tracking-widest pointer-events-none">YOUTUBE VIDEO</span>
@@ -83,7 +106,6 @@
                 </button>
             </div>
         </div>
-
         <div id="widgetVideoBody" class="w-full aspect-video bg-black relative">
             <iframe id="ytIframe" class="w-full h-full" 
                     src="https://www.youtube.com/embed/{{ song.youtube_id }}?rel=0&modestbranding=1&enablejsapi=1" 
@@ -92,9 +114,8 @@
                     referrerpolicy="strict-origin-when-cross-origin"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowfullscreen>
-            </iframe >
+            </iframe>
         </div>
-        
         <div id="widgetFooter" class="bg-zinc-950/80 px-4 py-1.5 border-t border-zinc-800/40 text-center relative flex justify-center items-center">
             <div id="widgetResizeHandle" class="absolute bottom-0 left-0 w-4 h-4 cursor-nesw-resize flex items-end justify-start pl-0.5 pb-0.5 text-zinc-600 hover:text-zinc-400 transition select-none touch-none" title="Resize Video">
                 <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -110,7 +131,6 @@
     {% endif %}
 
     <div id="bpmVideoWidget" class="fixed bottom-6 left-6 w-64 bg-zinc-900 border border-green-800 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col transition-shadow duration-300" style="bottom: 24px; left: 24px;">
-        
         <div id="bpmWidgetHeader" class="bg-zinc-950 px-4 py-2.5 border-b border-zinc-800 flex items-center justify-between cursor-move select-none touch-none">
             <div class="flex items-center gap-2 text-zinc-500">
                 <span id="bpmVisualPulse" class="w-2 h-2 rounded-full bg-zinc-700 transition-colors duration-100"></span>
@@ -122,7 +142,6 @@
                 </button>
             </div>
         </div>
-
         <div id="bpmWidgetBody" class="p-4 space-y-4 bg-zinc-900">
             <div class="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl p-3">
                 <div class="flex flex-col">
@@ -133,13 +152,11 @@
                     ▶
                 </button>
             </div>
-
             <div class="space-y-3">
                 <div>
                     <span class="text-[10px] text-zinc-500 font-bold tracking-wider uppercase block mb-1">Tempo Slider</span>
                     <input type="range" id="metronomeBpmSlider" min="40" max="250" value="120" oninput="updateBpmFromSlider(this.value)" class="w-full accent-emerald-500 bg-zinc-950 h-1.5 rounded cursor-pointer">
                 </div>
-
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <span class="text-[10px] text-zinc-500 font-bold tracking-wider uppercase">Volume</span>
@@ -147,12 +164,10 @@
                     </div>
                     <input type="range" id="metronomeVolumeSlider" min="0" max="100" value="70" oninput="updateVolume(this.value)" class="w-full accent-emerald-500 bg-zinc-950 h-1.5 rounded cursor-pointer">
                 </div>
-                
                 <div class="grid grid-cols-2 gap-2">
                     <button onclick="adjustBpmStep(-1)" class="py-1.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition">−1 BPM</button>
                     <button onclick="adjustBpmStep(1)" class="py-1.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition">＋1 BPM</button>
                 </div>
-                
                 <button onclick="tapTempoTrigger()" class="w-full py-3 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-emerald-400 text-xs font-black uppercase tracking-widest rounded-xl transition active:scale-[0.98]">
                     Tap Tempo
                 </button>
@@ -163,6 +178,76 @@
 </div>
 
 <script>
+    // --- 🔥 NEW HTML5 FULLSCREEN LOGIC ---
+    function toggleFullscreen() {
+        const stage = document.getElementById('performanceStage');
+        const workspace = document.getElementById('mainWorkspaceContainer');
+        const icon = document.getElementById('fullscreenIcon');
+
+        if (!document.fullscreenElement) {
+            // Pasok sa Fullscreen
+            stage.requestFullscreen().then(() => {
+                stage.classList.add('fullscreen-active');
+                // Gawing mas mataas ang workspace para sulit ang screen estate
+                workspace.style.height = 'calc(100vh - 90px)'; 
+                workspace.style.maxWidth = '100%';
+                
+                // Palitan ang icon ng "Exit Fullscreen"
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9V4.5M15 9h4.5M15 9l5.25-5.25M15 15v4.5M15 15h4.5M15 15l5.25 5.25" />`;
+            }).catch(err => {
+                console.error(`Error enabling fullscreen: ${err.message}`);
+            });
+        } else {
+            // Labas sa Fullscreen
+            document.exitFullscreen();
+        }
+    }
+
+    // Monitor kapag pinindot ng user ang 'ESC' key para mag-exit ng fullscreen
+    document.addEventListener('fullscreenchange', () => {
+        const stage = document.getElementById('performanceStage');
+        const workspace = document.getElementById('mainWorkspaceContainer');
+        const icon = document.getElementById('fullscreenIcon');
+
+        if (!document.fullscreenElement) {
+            stage.classList.remove('fullscreen-active');
+            workspace.style.height = '70vh'; // Ibalik sa normal table-view height
+            workspace.style.maxWidth = '56rem'; // Max-w-4xl fallback
+            
+            // Ibalik ang lumang Normal Fullscreen Icon
+            icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m5.25 11.25v-4.5m0 4.5h-4.5m4.5 0l-6-6" />`;
+        }
+    });
+
+    // --- TAB TOGGLE + CONTEXTUAL TRANSPOSE ENGINE ---
+function switchTab(targetTab) {
+    const lyricsBtn = document.getElementById('tab-lyrics-btn');
+    const chordsBtn = document.getElementById('tab-chords-btn');
+    const lyricsPanel = document.getElementById('panel-lyrics');
+    const chordsPanel = document.getElementById('panel-chords');
+    const transposeCtrl = document.getElementById('global-transpose-ctrl');
+
+    // Idinagdag ang "flex items-center gap-1.5" sa unahan ng mga classes na ito:
+    const activeClass = "flex items-center gap-1.5 px-4 py-2 text-xs font-black tracking-wider uppercase rounded-lg transition-all duration-200 bg-zinc-800 text-white border border-zinc-700/40 shadow";
+    const inactiveClass = "flex items-center gap-1.5 px-4 py-2 text-xs font-black tracking-wider uppercase rounded-lg transition-all duration-200 text-zinc-400 hover:text-white";
+
+    if (targetTab === 'lyrics') {
+        lyricsBtn.className = activeClass;
+        chordsBtn.className = inactiveClass;
+        lyricsPanel.classList.remove('hidden');
+        chordsPanel.classList.add('hidden');
+        transposeCtrl.classList.remove('flex');
+        transposeCtrl.classList.add('hidden');
+    } else {
+        chordsBtn.className = activeClass;
+        lyricsBtn.className = inactiveClass;
+        chordsPanel.classList.remove('hidden');
+        lyricsPanel.classList.add('hidden');
+        transposeCtrl.classList.remove('hidden');
+        transposeCtrl.classList.add('flex');
+    }
+}
+
     // --- FEATURE A: TYPOGRAPHY ADJUSTMENT ENGINE ---
     let currentLyricsSize = 16;
     let currentChordsSize = 15;
@@ -322,7 +407,7 @@
     const bpmHeader = document.getElementById('bpmWidgetHeader');
     if (bpmWidget && bpmHeader) makeWidgetDraggable(bpmWidget, bpmHeader);
 
-    // --- FEATURE F: WEB AUDIO METRONOME ENGINE LOGIC ---
+    // --- FEATURE F: WEB AUDIO METRONOME ENGINE ---
     let bpmValue = 120;
     let metronomeVolume = 0.7; 
     let isMetronomePlaying = false;
@@ -338,35 +423,28 @@
 
     function playClickSound() {
         if (!audioContext) return;
-        
         const osc = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
-
         osc.connect(gainNode);
         gainNode.connect(audioContext.destination);
-
         osc.type = 'sine'; 
         osc.frequency.value = 1000; 
-
         const now = audioContext.currentTime;
         gainNode.gain.setValueAtTime(metronomeVolume, now);
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05); 
-
         osc.start(now);
         osc.stop(now + 0.05);
     }
 
-    function updateVolume(val) {
-        metronomeVolume = parseInt(val) / 100;
-        document.getElementById('metronomeVolumeDisplay').textContent = val + '%';
-    }
+    document.getElementById('metronomeVolumeSlider').addEventListener('input', function(e) {
+        metronomeVolume = parseInt(e.target.value) / 100;
+        document.getElementById('metronomeVolumeDisplay').textContent = e.target.value + '%';
+    });
 
     function updateMetronomeVisuals() {
         document.getElementById('bpmDisplayValue').textContent = bpmValue;
         document.getElementById('metronomeBpmSlider').value = bpmValue;
-        if (isMetronomePlaying) {
-            restartMetronome();
-        }
+        if (isMetronomePlaying) restartMetronome();
     }
 
     function updateBpmFromSlider(val) {
@@ -385,27 +463,25 @@
     function toggleMetronome() {
         initAudioContext(); 
         const btn = document.getElementById('metronomePlayBtn');
-        
         if (isMetronomePlaying) {
             isMetronomePlaying = false;
             clearInterval(metronomeIntervalId);
             metronomeIntervalId = null;
             btn.textContent = "▶";
-            btn.className = "w-12 h-12 rounded-xl bg-emerald-950 border border-emerald-700 hover:border-emerald-500 text-emerald-400 hover:text-white flex items-center justify-center text-xl transition shadow-lg shadow-emerald-950/40";
+            btn.className = "w-12 h-12 rounded-xl bg-emerald-950 border border-emerald-700 hover:border-emerald-500 text-emerald-400 hover:text-white flex items-center justify-center text-xl transition";
         } else {
             isMetronomePlaying = true;
             btn.textContent = "■";
-            btn.className = "w-12 h-12 rounded-xl bg-red-950 border border-red-700 hover:border-red-500 text-red-400 hover:text-white flex items-center justify-center text-xl transition shadow-lg shadow-red-950/40";
-            
+            btn.className = "w-12 h-12 rounded-xl bg-red-950 border border-red-700 hover:border-red-500 text-red-400 hover:text-white flex items-center justify-center text-xl transition";
             playClickSound();
             triggerVisualPulse();
-            
             restartMetronome();
         }
     }
 
     function triggerVisualPulse() {
         const pulseIndicator = document.getElementById('bpmVisualPulse');
+        if(!pulseIndicator) return;
         pulseIndicator.className = "w-2 h-2 rounded-full bg-emerald-400 shadow-md shadow-emerald-400/80 transition-none";
         setTimeout(() => {
             pulseIndicator.className = "w-2 h-2 rounded-full bg-zinc-700 transition-colors duration-100";
@@ -415,7 +491,6 @@
     function restartMetronome() {
         if (metronomeIntervalId) clearInterval(metronomeIntervalId);
         const intervalMs = (60 / bpmValue) * 1000;
-
         metronomeIntervalId = setInterval(() => {
             playClickSound();
             triggerVisualPulse();
@@ -425,17 +500,12 @@
     function tapTempoTrigger() {
         const now = performance.now();
         tapTimes.push(now);
-
         if (tapTimes.length > 4) tapTimes.shift();
-
         if (tapTimes.length > 1) {
             let intervals = [];
-            for (let i = 1; i < tapTimes.length; i++) {
-                intervals.push(tapTimes[i] - tapTimes[i - 1]);
-            }
+            for (let i = 1; i < tapTimes.length; i++) { intervals.push(tapTimes[i] - tapTimes[i - 1]); }
             const averageInterval = intervals.reduce((a, b) => a + b) / intervals.length;
             let calculatedBpm = Math.round(60000 / averageInterval);
-
             if (calculatedBpm >= 40 && calculatedBpm <= 250) {
                 bpmValue = calculatedBpm;
                 updateMetronomeVisuals();
@@ -483,17 +553,9 @@
             document.addEventListener('mouseup', onMouseUp);
             e.preventDefault();
         });
-
-        resizeHandle.addEventListener('touchstart', function(e) {
-            resizeStart(e.touches[0].clientX);
-            const onTouchMove = (evt) => { if (evt.touches.length > 0) { resizeMove(evt.touches[0].clientX); evt.preventDefault(); } }
-            const onTouchEnd = () => { resizeEnd(); document.removeEventListener('touchmove', onTouchMove); document.removeEventListener('touchend', onTouchEnd); }
-            document.addEventListener('touchmove', onTouchMove, { passive: false });
-            document.addEventListener('touchend', onTouchEnd);
-        });
     }
 
-    // --- 🔥 FEATURE H: CHORD TRANSPOSITION ENGINE ---
+    // --- FEATURE H: CHORD TRANSPOSITION ENGINE ---
     let originalChordsText = null;
     let currentTransposeStep = 0;
 
@@ -502,15 +564,9 @@
         const stepDisplay = document.getElementById('transposeStep');
         
         if (!chordsTarget) return;
-
-        // Isave ang orihinal na chords text sa unang beses para hindi masira sa paulit-ulit na pag-transpose
-        if (originalChordsText === null) {
-            originalChordsText = chordsTarget.innerText;
-        }
+        if (originalChordsText === null) originalChordsText = chordsTarget.innerText;
 
         currentTransposeStep += stepChange;
-        
-        // Loop back para hindi lumagpas sa +11 o -11 ang scale (1 Octave limitation)
         if (currentTransposeStep > 11) currentTransposeStep -= 12;
         if (currentTransposeStep < -11) currentTransposeStep += 12;
 
@@ -522,64 +578,52 @@
             return;
         }
 
-        // Chromatic Note Dictionary
         const scale = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
         const flats = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
 
         function shiftNote(note) {
             if (!note) return "";
             let idx = scale.indexOf(note);
-            if (idx === -1) idx = flats.indexOf(note); // Fallback para sa mga Flat notes
+            if (idx === -1) idx = flats.indexOf(note); 
             if (idx === -1) return note;
-
             let newIdx = (idx + currentTransposeStep) % 12;
             if (newIdx < 0) newIdx += 12;
-            return scale[newIdx]; // Automatic isosoli as Sharp note map para uniform
+            return scale[newIdx]; 
         }
 
         function transposeChordString(chordStr) {
-            // Hiwain ang string para ihiwalay ang Root note (C), Modifier (m7), at Bass (/G)
             const partsRegex = /^([CDEFGAB][b#]?)(.*?)(\/[CDEFGAB][b#]?)?$/;
             const match = chordStr.match(partsRegex);
-            
             if (!match) return chordStr;
 
             let root = match[1];
             let mod = match[2] || '';
             let bass = match[3] ? match[3].substring(1) : null; 
-
-            let newRoot = shiftNote(root);
-            let newBass = bass ? "/" + shiftNote(bass) : "";
-
-            return newRoot + mod + newBass;
+            return shiftNote(root) + mod + (bass ? "/" + shiftNote(bass) : "");
         }
 
-        // Matinding Regex: Hahanapin niya lang ang valid uppercase chords na napapalibutan ng spaces, parenthesis, brackets o dulo ng linya.
-        // Iniiwasan nito na aksidenteng matranspose yung simpleng salitang "A" sa loob ng lyrics.
         const chordPattern = /(^|[\s\(\[-])([CDEFGAB][b#]?(?:m|maj|min|dim|aug|sus|add|M)?\d*(?:\/[CDEFGAB][b#]?)?)(?=[\s\)\]-]|$)/g;
-
-        const transposedText = originalChordsText.replace(chordPattern, function(match, prefix, chord) {
+        chordsTarget.innerText = originalChordsText.replace(chordPattern, function(match, prefix, chord) {
             return prefix + transposeChordString(chord);
         });
-
-        chordsTarget.innerText = transposedText;
     }
 </script>
 
 <style>
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-        height: 6px; 
+    /* Custom style tweaks kapag naka HTML5 Fullscreen */
+    #performanceStage:fullscreen {
+        padding: 24px;
+        background-color: #09090b; /* zinc-950 pitch black para iwas distractions */
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 16px;
     }
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #27272a;
-        border-radius: 9999px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #3f3f46;
-    }
+
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 </style>
 {% endblock %}

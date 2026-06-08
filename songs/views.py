@@ -232,7 +232,7 @@ def fetch_chords_duckduckgo(title, artist):
     
     # Mas ligtas kung i-aadd mo ang 'SCRAPER_API_KEY' sa Environment Variables ng Render Dashboard.
     # Kung hindi, palitan mo na lang muna ang string placeholder sa ibaba.
-    SCRAPER_API_KEY = os.environ.get('SCRAPER_API_KEY', 'ILAGAY_DITO_ANG_SCRAPER_API_KEY_MO')
+    SCRAPER_API_KEY = os.environ.get('SCRAPER_API_KEY', '3548bf98fe767c4f7b81b3b0aac75102')
 
     def smart_get(url, timeout_secs=10):
         """
@@ -528,11 +528,11 @@ def transpose_song_api(request):
 # 3. STANDARD CRUD / PAGE VIEWS
 # =========================================================================
 
-@login_required
+@login_required # Sinisiguro nito na may naka-login na user bago buksan ang page
 def song_list(request):
-    songs = Song.objects.all().order_by('-id')
+    # I-filter lang ang mga kanta na PAG-AARI ng kasalukuyang naka-login na user
+    songs = Song.objects.filter(user=request.user) 
     return render(request, 'songs/song_list.html', {'songs': songs})
-
 
 @login_required
 def song_detail(request, pk):

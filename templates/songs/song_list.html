@@ -14,39 +14,11 @@
         </a>
     </div>
 
-    <form method="GET" action="{% url 'song_list' %}" class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
-        <div class="md:col-span-2 relative">
-            <input type="text" name="q" value="{{ query }}" placeholder="Search title, artist, or lyric keywords..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 pl-4 pr-10 text-sm text-white focus:outline-none focus:border-zinc-700 placeholder:text-zinc-500">
-            {% if query %}
-                <a href="{% url 'song_list' %}" class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white text-xs">&times; Clear</a>
-            {% endif %}
-        </div>
-
-        <div>
-            <select name="key" onchange="this.form.submit();" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-zinc-700">
-                <option value="">-- Filter By Key --</option>
-                {% for k in musical_keys %}
-                    <option value="{{ k }}" {% if key_filter == k %}selected{% endif %}>Key of {{ k }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="flex gap-2">
-            <button type="submit" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-sm py-2.5 rounded-xl transition">
-                Apply Filter
-            </button>
-            {% if query or key_filter %}
-                <a href="{% url 'song_list' %}" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white text-sm font-medium px-3 py-2.5 rounded-xl transition flex items-center justify-center" title="Reset all current query filter metrics">
-                    Reset
-                </a>
-            {% endif %}
-        </div>
-    </form>
 
     {% if songs %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {% for song in songs %}
-                <div class="bg-zinc-900 border border-zinc-800 p-5 rounded-xl hover:border-zinc-700 transition flex items-center justify-between group">
+                <div class="song-card bg-zinc-900 border border-zinc-800 p-5 rounded-xl hover:border-zinc-700 transition flex items-center justify-between group">
                     <div class="truncate mr-4">
                         <h3 class="text-base font-bold text-white truncate group-hover:text-zinc-200 transition">{{ song.title }}</h3>
                         <p class="text-zinc-400 text-xs truncate mt-0.5">by {{ song.artist }}</p>
@@ -60,12 +32,14 @@
                             Open &rarr;
                         </a>
 
-                        <a href="{% url 'song_delete' song.pk %}" 
-                           onclick="return confirm('Are you sure you want to delete \'{{ song.title }}\'?');"
-                           class="bg-zinc-950 hover:bg-red-950 text-zinc-500 hover:text-red-400 border border-zinc-800 hover:border-red-900 text-xs font-bold px-2.5 py-2 rounded-lg transition"
-                           title="Delete Song">
-                            🗑️
-                        </a>
+                        <form onsubmit="deleteSongInline(event, this, '{{ song.title|escapejs }}')" action="{% url 'song_delete' song.pk %}" method="POST" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="bg-zinc-950 hover:bg-red-950 text-zinc-500 hover:text-red-400 border border-zinc-800 hover:border-red-900 text-xs font-bold px-2.5 py-2 rounded-lg transition active:scale-95"
+                                    title="Delete Song">
+                                🗑️
+                            </button>
+                        </form>
                     </div>
                 </div>
             {% endfor %}
@@ -77,4 +51,52 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+function deleteSongInline(event, form, songTitle) {
+    // 1. Pigilan ang default form submission para hindi mag-refresh ang page
+    event.preventDefault();
+
+    // 2. Pop-up Confirmation Check
+    const confirmDelete = confirm(`Sigurado ka bang gusto mong burahin ang kantang "${songTitle}"?`);
+    
+    if (!confirmDelete) {
+        return; // Hinto kapag pinindot ang 'Cancel'
+    }
+
+    // 3. Simulan ang Ajax Fetch kapag nag-'OK' ang user
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => {
+        // Eksaktong targetin ang buong card wrapper
+        const songCard = form.closest('.song-card');
+        
+        if (songCard) {
+            // Smooth premium fade-out at scale transition down
+            songCard.style.transition = "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+            songCard.style.opacity = "0";
+            songCard.style.transform = "scale(0.9)";
+            
+            setTimeout(() => {
+                songCard.remove();
+                
+                // Optional: Kung naubos ang kanta sa screen matapos mag-delete, i-reload para lumabas yung 'No tracks match' placeholder
+                const remainingCards = document.querySelectorAll('.song-card');
+                if (remainingCards.length === 0) {
+                    window.location.reload();
+                }
+            }, 300);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Naku! Nagka-error sa pagbura. Pakisubukan ulit.');
+    });
+}
+</script>
 {% endblock %}

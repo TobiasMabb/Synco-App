@@ -7,55 +7,45 @@
 <div class="min-h-[75vh] flex flex-col justify-center items-center">
     <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-xl">
         <div class="text-center mb-8">
-            <h2 class="text-3xl font-extrabold text-white tracking-tight">Welcome to SYNCO</h2>
+            <h2 class="text-3xl font-extrabold text-white tracking-tight">Welcome to Synco</h2>
             <p class="text-sm text-zinc-400 mt-2">Sign in to manage your worship ministry layout apps</p>
         </div>
 
-        {% if form.non_field_errors %}
-        <div class="mb-4 rounded-xl bg-red-900/20 border border-red-700 p-4 text-sm text-red-200">
-            {{ form.non_field_errors }}
-        </div>
-        {% endif %}
-
         <form method="POST" class="space-y-5">
             {% csrf_token %}
-            {{ form.hidden_fields }}
-            {% if redirect_field_value %}
-                <input type="hidden" name="next" value="{{ redirect_field_value }}" />
-            {% endif %}
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Username or email</label>
-                {{ form.login }}
-                {% if form.login.errors %}
-                    <p class="text-red-400 text-sm mt-1">{{ form.login.errors|striptags }}</p>
-                {% endif %}
+                <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Username</label>
+                <input type="text" name="username" required autocomplete="username"
+                       class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-green-900 focus:border-transparent transition">
             </div>
 
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Password</label>
-                {{ form.password }}
-                {% if form.password.errors %}
-                    <p class="text-red-400 text-sm mt-1">{{ form.password.errors|striptags }}</p>
-                {% endif %}
+                <input type="password" name="password" required autocomplete="current-password"
+                       class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-green-900 focus:border-transparent transition">
             </div>
 
-            <button type="submit" class="w-full bg-brandBlue hover:bg-blue-600 text-white font-semibold py-3 rounded-xl transition duration-200 mt-2 shadow-lg shadow-brandBlue/10">
+            <button type="submit" 
+                    class="w-full bg-green-900 hover:bg-blue-600 text-white font-semibold py-3 rounded-xl transition duration-200 mt-2 shadow-lg shadow-green-900/10">
                 Sign In
             </button>
         </form>
 
         <div class="mt-6">
             <a href="{% provider_login_url 'google' %}" class="w-full inline-flex items-center justify-center gap-3 rounded-xl border border-zinc-800 bg-white/5 px-4 py-3 text-sm text-white transition hover:bg-white/10">
-                <img src="https://www.svgrepo.com/show/354024/google.svg" alt="Google logo" class="h-5 w-5" />
                 Continue with Google
             </a>
         </div>
 
         <div class="text-center mt-6 border-t border-zinc-800/60 pt-4">
             <p class="text-sm text-zinc-400">
-                New to the platform?
-                <a href="{% url 'account_signup' %}" class="text-brandBlue font-medium hover:underline ml-1">Create an account</a>
-            </p>
+                New to the platform?</p>
+                <a href="{% url 'account_signup' %}" class="text-green-800 font-medium text-sm underline ml-1">Create an account</a>
+            
+            <p class="text-sm text-zinc-400 mt-2">
+                Forgot your password?</p>
+                <a href="{% url 'account_reset_password' %}" class="text-green-800 font-medium text-sm underline ml-1">Reset it here</a>
+            
         </div>
     </div>
 </div>
