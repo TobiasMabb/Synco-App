@@ -117,8 +117,10 @@ WSGI_APPLICATION = 'synco.wsgi.application'
 # ---------------------------
 if os.environ.get("DATABASE_URL"):
     DATABASES = {
-        "default": dj_database_url.config(
-            conn_max_age=600,
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=0,  # <-- Siguraduhing NAKA-SET ITO SA 0
+            ssl_require=True # <-- At siguraduhing naka-true ang SSL
         )
     }
 else:
